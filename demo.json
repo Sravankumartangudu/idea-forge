@@ -18,7 +18,10 @@
       "id": "demo1",
       "created": "2026-10-01T09:00:00Z",
       "updated": "2026-10-01T09:00:00Z",
-      "order": 0
+      "order": 0,
+      "origin": {
+        "by": "you"
+      }
     },
     {
       "n": 2,
@@ -53,7 +56,9 @@
       "id": "demo2",
       "created": "2026-10-02T09:00:00Z",
       "updated": "2026-10-02T09:00:00Z",
-      "order": 1
+      "order": 1,
+      "impact": "low",
+      "effort": "high"
     },
     {
       "n": 3,
@@ -95,7 +100,15 @@
       "id": "demo3",
       "created": "2026-10-03T09:00:00Z",
       "updated": "2026-10-03T09:00:00Z",
-      "order": 2
+      "order": 2,
+      "group": "Receipt Scanner",
+      "origin": {
+        "by": "ai",
+        "label": "Sparked from C#1"
+      },
+      "challenge": "dc1",
+      "impact": "high",
+      "effort": "high"
     },
     {
       "n": 4,
@@ -131,7 +144,11 @@
       "id": "demo4",
       "created": "2026-10-04T09:00:00Z",
       "updated": "2026-10-04T09:00:00Z",
-      "order": 3
+      "order": 3,
+      "impact": "high",
+      "effort": "low",
+      "placeWhy": "One calendar check unblocks the rest.",
+      "challenge": "dc4"
     },
     {
       "n": 5,
@@ -161,7 +178,9 @@
       "id": "demo5",
       "created": "2026-10-05T09:00:00Z",
       "updated": "2026-10-05T09:00:00Z",
-      "order": 4
+      "order": 4,
+      "impact": "low",
+      "effort": "low"
     },
     {
       "n": 6,
@@ -201,7 +220,15 @@
       "id": "demo6",
       "created": "2026-10-06T09:00:00Z",
       "updated": "2026-10-06T09:00:00Z",
-      "order": 5
+      "order": 5,
+      "impact": "high",
+      "effort": "high",
+      "group": "Plant Buddy",
+      "origin": {
+        "by": "ai",
+        "label": "Sparked from C#2"
+      },
+      "challenge": "dc2"
     },
     {
       "n": 7,
@@ -297,7 +324,8 @@
       "id": "demo9",
       "created": "2026-10-09T09:00:00Z",
       "updated": "2026-10-09T09:00:00Z",
-      "order": 8
+      "order": 8,
+      "challenge": "dc3"
     },
     {
       "n": 10,
@@ -318,7 +346,220 @@
       "id": "demo10",
       "created": "2026-10-01T09:00:00Z",
       "updated": "2026-10-01T09:00:00Z",
-      "order": 9
+      "order": 9,
+      "origin": {
+        "by": "teammate",
+        "name": "Sam Lee"
+      }
+    },
+    {
+      "type": "enhancement",
+      "home": "personal",
+      "app": "",
+      "priority": "med",
+      "helpers": [],
+      "tags": [],
+      "why": "",
+      "created": "2026-10-12T09:00:00Z",
+      "updated": "2026-10-12T09:00:00Z",
+      "id": "demo11",
+      "n": 11,
+      "status": "inbox",
+      "title": "Read the total from crumpled receipts",
+      "raw": "receipt scanner should cope with crumpled paper",
+      "group": "Receipt Scanner",
+      "summary": "",
+      "steps": [],
+      "order": 1,
+      "origin": {
+        "by": "you"
+      }
+    },
+    {
+      "type": "enhancement",
+      "home": "personal",
+      "app": "",
+      "priority": "med",
+      "helpers": [],
+      "tags": [],
+      "why": "",
+      "created": "2026-10-12T09:00:00Z",
+      "updated": "2026-10-12T09:00:00Z",
+      "id": "demo12",
+      "n": 12,
+      "status": "shaped",
+      "title": "Group receipts by shop automatically",
+      "raw": "group by shop",
+      "group": "Receipt Scanner",
+      "summary": "Learns shop names and files each receipt under it.",
+      "steps": [
+        {
+          "t": "List shop names seen so far",
+          "done": false
+        },
+        {
+          "t": "Match new receipts to a shop",
+          "done": false
+        }
+      ],
+      "order": 1,
+      "impact": "high",
+      "effort": "low",
+      "origin": {
+        "by": "ai",
+        "label": "Sparked from C#1"
+      },
+      "challenge": "dc1"
+    },
+    {
+      "type": "enhancement",
+      "home": "personal",
+      "app": "",
+      "priority": "med",
+      "helpers": [],
+      "tags": [],
+      "why": "",
+      "created": "2026-10-12T09:00:00Z",
+      "updated": "2026-10-12T09:00:00Z",
+      "id": "demo13",
+      "n": null,
+      "status": "suggested",
+      "title": "Email a monthly spending summary",
+      "raw": "",
+      "group": "Receipt Scanner",
+      "summary": "Once a month, a short email with totals per category.",
+      "steps": [
+        {
+          "t": "Add up each category",
+          "done": false
+        },
+        {
+          "t": "Send one plain email",
+          "done": false
+        }
+      ],
+      "order": 0,
+      "origin": {
+        "by": "ai",
+        "label": "Sparked from C#1"
+      },
+      "challenge": "dc1"
+    },
+    {
+      "type": "enhancement",
+      "home": "personal",
+      "app": "",
+      "priority": "med",
+      "helpers": [],
+      "tags": [],
+      "why": "",
+      "created": "2026-10-12T09:00:00Z",
+      "updated": "2026-10-12T09:00:00Z",
+      "id": "demo14",
+      "n": null,
+      "status": "suggested",
+      "title": "Water reminder that checks the weather",
+      "raw": "",
+      "group": "Plant Buddy",
+      "summary": "Skips the reminder when it rained.",
+      "steps": [
+        {
+          "t": "Read a free weather feed",
+          "done": false
+        }
+      ],
+      "order": 0,
+      "origin": {
+        "by": "ai",
+        "label": "Sparked from C#2"
+      },
+      "challenge": "dc2"
+    }
+  ],
+  "challenges": [
+    {
+      "id": "dc1",
+      "n": 1,
+      "title": "Paper receipts pile up and I lose track of spending",
+      "detail": "Every month I spend an evening typing receipts into a sheet.",
+      "where": "Home office",
+      "often": "weekly",
+      "impact": "high",
+      "status": "open",
+      "origin": {
+        "by": "you"
+      },
+      "hits": 3,
+      "lastHit": "2026-10-13T18:00:00Z",
+      "created": "2026-10-02T09:00:00Z",
+      "updated": "2026-10-13T18:00:00Z"
+    },
+    {
+      "id": "dc2",
+      "n": 2,
+      "title": "Plants die because I forget to water them",
+      "detail": "Different plants need water on different days.",
+      "where": "Home",
+      "often": "weekly",
+      "impact": "med",
+      "status": "open",
+      "origin": {
+        "by": "you"
+      },
+      "hits": 2,
+      "created": "2026-10-03T09:00:00Z",
+      "updated": "2026-10-03T09:00:00Z"
+    },
+    {
+      "id": "dc3",
+      "n": 3,
+      "title": "Old build folders fill up the disk",
+      "detail": "Each release leaves a few hundred MB behind.",
+      "where": "Mac",
+      "often": "monthly",
+      "impact": "low",
+      "status": "solved",
+      "origin": {
+        "by": "you"
+      },
+      "hits": 1,
+      "solvedAt": "2026-10-09T09:00:00Z",
+      "created": "2026-09-20T09:00:00Z",
+      "updated": "2026-10-09T09:00:00Z"
+    },
+    {
+      "id": "dc4",
+      "n": 4,
+      "title": "Meetings break my focus sessions",
+      "detail": "The timer keeps running through calls.",
+      "where": "Work days",
+      "often": "daily",
+      "impact": "high",
+      "status": "open",
+      "origin": {
+        "by": "teammate",
+        "name": "Sam Lee"
+      },
+      "hits": 1,
+      "created": "2026-10-08T09:00:00Z",
+      "updated": "2026-10-08T09:00:00Z"
+    },
+    {
+      "id": "dc5",
+      "n": null,
+      "title": "Hard to find old recipes I liked",
+      "detail": "Search only matches titles.",
+      "where": "Recipe Box",
+      "often": "weekly",
+      "impact": "med",
+      "status": "suggested",
+      "origin": {
+        "by": "ai",
+        "label": "From your ideas"
+      },
+      "hits": 1,
+      "created": "2026-10-14T09:00:00Z",
+      "updated": "2026-10-14T09:00:00Z"
     }
   ]
 }

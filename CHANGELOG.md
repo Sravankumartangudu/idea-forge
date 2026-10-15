@@ -1,5 +1,28 @@
 # Changelog
 
+## 1.1.0 — 2026-10-15
+
+- 🧗 **Challenges** tab: write down the problems that slow you down. The AI shapes each one and sparks ideas
+  to solve it. Columns are Open (hottest first), Has ideas and Solved; a challenge is solved when its idea
+  ships. Hitting the same problem again adds a hit instead of a duplicate.
+- 🔍 **Find challenges** suggests challenges from the TODO/FIXME notes in your app folders and the open issues
+  on your public GitHub repos. It can run once a day.
+- **Pick your AI**: Claude Code, the Anthropic API, OpenAI, Google Gemini, OpenRouter, Ollama or any
+  OpenAI-compatible server. Model lists load live from the provider and refresh daily. Keys stay in the
+  Keychain. ⚡ Test connection checks the setup.
+- **Groups**: keep the many ideas for one plan together. There's a Stages | Groups switch, ＋ New group, the AI
+  fills in the group, and clicking a group chip filters the board to it.
+- **Who added it**: every card shows 👤 You, ✨ AI or 🤝 Teammate, and you can filter by it.
+- ✨ **Suggested** tray: what the AI comes up with waits there until you keep or dismiss it.
+- ⊞ **Matrix** tab: impact × effort squares (Quick wins, Big bets, Fill-ins, Money pits). Drag cards into
+  them, or let the AI place them.
+- ⌃⌥N **quick capture** from anywhere, with an ⌃⌥⇧ option for when another app has the keys.
+- 💬 Ask, 🎯 What next? and 🔁 Looks like #n now work with any AI you pick.
+- 🚀 Build opens Claude Code or Codex in Terminal. 🐙 Open as issue files a card on the app's GitHub repo.
+- Weekly digest notification, an update check against GitHub releases, and **Choose folder…** for the ideas
+  file (for example iCloud Drive).
+- Idea Forge never reads your screen, browser or other apps.
+
 ## 1.0.0 — 2026-10-15
 
 First release.

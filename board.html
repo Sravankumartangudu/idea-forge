@@ -240,6 +240,69 @@ body.ed-work .logo{background:linear-gradient(145deg,#99f6e4,#14b8a6 55%,#0f766e
 .note{margin-top:10px;padding:8px 10px;border-radius:9px;background:var(--accent-soft);color:var(--accent-ink);font-size:12px;line-height:1.45}
 .bit{position:fixed;width:8px;height:12px;border-radius:2px;pointer-events:none;z-index:70;animation:bit 1.1s cubic-bezier(.15,.7,.3,1) forwards}
 @keyframes bit{60%{opacity:1}to{transform:translate(var(--dx),var(--dy)) rotate(var(--r));opacity:0}}
+/* ---------- 1.1: tabs, challenges, origins, tray, matrix, AI settings ---------- */
+:root{--ch-open:#f97316;--ch-ideas:#8b5cf6;--ch-solved:#10b981;--o-ai:#8b5cf6;--o-page:#3b82f6;--o-teammate:#10b981}
+.tabbar{display:flex;align-items:center;gap:8px;padding:0 20px 10px;flex-wrap:wrap}
+.tabbar .grow{flex:1}
+.tabs{flex:none}
+.tabs button{flex:none;padding:6px 14px;font-size:12.5px}
+.tabs .n{font-size:10.5px;color:var(--faint);margin-left:5px;font-variant-numeric:tabular-nums}
+.badge{min-width:18px;height:18px;border-radius:9px;background:var(--accent-fill);color:#fff;font-size:10.5px;font-weight:700;display:inline-grid;place-items:center;padding:0 5px}
+.btn.busy{color:var(--accent-ink);border-color:color-mix(in srgb,var(--accent) 50%,transparent)}
+.btn:disabled{opacity:.5;cursor:default}
+.chip.o-ai{background:color-mix(in srgb,var(--o-ai) 14%,transparent);color:color-mix(in srgb,var(--o-ai) 65%,var(--text))}
+.chip.o-page{background:color-mix(in srgb,var(--o-page) 14%,transparent);color:color-mix(in srgb,var(--o-page) 65%,var(--text))}
+.chip.o-teammate{background:color-mix(in srgb,var(--o-teammate) 14%,transparent);color:color-mix(in srgb,var(--o-teammate) 60%,var(--text))}
+.chip.o-you{background:var(--chip)}
+.chip.chl{cursor:pointer;border:1px solid color-mix(in srgb,var(--ch-open) 40%,transparent);background:transparent;color:color-mix(in srgb,var(--ch-open) 70%,var(--text))}
+.card.ch{--tc:var(--t-none)}
+.card.ch.i-high{--tc:#ef4444}.card.ch.i-med{--tc:#f59e0b}.card.ch.i-low{--tc:#94a3b8}
+.card.ch{cursor:pointer}
+.hits{margin-left:auto;font:650 11px ui-monospace,SFMono-Regular,monospace;color:var(--dim)}
+.ch-act{display:flex;gap:6px;margin-top:9px;flex-wrap:wrap}
+.mini{height:24px;border-radius:7px;border:1px solid var(--line);background:var(--panel);font-size:11.5px;padding:0 8px;color:var(--dim)}
+.mini:hover{border-color:var(--accent);color:var(--accent-ink)}
+.mini:disabled{opacity:.5;cursor:default}
+.board.mx{display:grid;grid-template-columns:minmax(220px,.75fr) 1fr 1fr;grid-template-rows:minmax(0,1fr) minmax(0,1fr);overflow:hidden}
+.board.mx .col{max-width:none;min-width:0}
+.board.mx .unplaced{grid-row:1 / span 2}
+.board.mx .card .sum{-webkit-line-clamp:1}
+.why-q{font-size:11px;color:var(--faint);margin-top:6px;font-style:italic}
+.pop.wide{width:430px}
+#setPop{width:390px}
+.sug{border:1px solid var(--line);border-radius:10px;padding:9px 11px;margin-bottom:8px;background:var(--panel)}
+.sug .t{font-weight:600;line-height:1.35;cursor:pointer}
+.sug .t:hover{color:var(--accent-ink)}
+.sug .w{color:var(--dim);font-size:12px;margin-top:2px;line-height:1.45}
+.sug-top{display:flex;gap:6px;align-items:center;font-size:11px;color:var(--faint);margin-bottom:5px;flex-wrap:wrap}
+.sug-act{display:flex;gap:6px;margin-top:8px}
+.sug-act .btn,.pop .btn.sm{height:28px;padding:0 10px;font-size:12px}
+.linked{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;cursor:pointer}
+.linked:hover{background:var(--chip)}
+.linked .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.linked .btn{height:24px;padding:0 8px;font-size:11.5px}
+.ai-status{padding:7px 10px;border-radius:8px;font-size:12px;margin:6px 0;line-height:1.4}
+.ai-status.ok{background:color-mix(in srgb,var(--shipped) 13%,transparent);color:color-mix(in srgb,var(--shipped) 60%,var(--text))}
+.ai-status.bad{background:var(--accent-soft);color:var(--accent-ink)}
+.inrow{display:flex;gap:6px;align-items:center;margin-top:6px}
+.inrow .lbl2{font-size:11.5px;color:var(--dim);width:46px;flex:none}
+.fin{height:30px;border:1px solid var(--line);border-radius:8px;background:var(--input);padding:0 9px;font:inherit;color:var(--text);outline:none;min-width:0;flex:1}
+.fin:focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent)}
+.pop select.pill{height:30px;flex:1;min-width:0;width:100%}
+.pop .tokens{min-height:32px}
+.good{color:color-mix(in srgb,var(--shipped) 65%,var(--text))}
+.bad{color:#dc2626}
+.field select.pill{width:100%}
+.inline-in{display:flex;gap:8px;margin-top:6px;align-items:center}
+.inline-in input{flex:1}
+.src{font-size:11.5px;color:var(--dim);margin-top:6px}
+.src a{color:var(--accent-ink)}
+.banner.click{cursor:pointer}
+.chip.stg{background:color-mix(in srgb,var(--c) 15%,transparent);color:color-mix(in srgb,var(--c) 65%,var(--text))}
+.chip.grp-chip{cursor:pointer}
+.chip.grp-chip:hover{color:var(--accent-ink)}
+.col.add-grp{flex:0 0 190px;background:transparent;border:1px dashed var(--line);padding:14px;align-items:stretch}
+.tabbar .seg[hidden],.tools [hidden]{display:none!important}
 @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -254,25 +317,36 @@ body.ed-work .logo{background:linear-gradient(145deg,#99f6e4,#14b8a6 55%,#0f766e
     </div>
   </div>
   <div class="tools">
-    <label class="search"><input id="q" type="text" placeholder="Search ideas" aria-label="Search ideas"><kbd>/</kbd></label>
+    <label class="search"><input id="q" type="text" placeholder="Search" aria-label="Search"><kbd>/</kbd></label>
     <select class="pill" id="fType" aria-label="Filter by type"></select>
     <select class="pill" id="fHome" aria-label="Filter by home"></select>
-    <select class="pill" id="fApp" aria-label="Filter by app"></select>
-    <button class="btn" id="nextBtn" hidden title="Claude looks at the whole board and picks what to build next">🎯 What next?</button>
+    <select class="pill" id="fGroup" aria-label="Filter by group"></select>
+    <select class="pill" id="fOrigin" aria-label="Filter by who added it"></select>
+    <button class="btn" id="nextBtn" title="The AI looks at the whole board and picks what to build next">🎯 What next?</button>
     <button class="btn" id="selBtn" title="Tick cards to remove or move them together">☑︎ Select</button>
     <button class="btn" id="copyBtn" title="Copy everything pending as a Markdown checklist">📋 Checklist</button>
-    <button class="btn icon" id="binBtn" title="Removed ideas" aria-label="Removed ideas">🗑</button>
+    <button class="btn icon" id="binBtn" title="Removed" aria-label="Removed">🗑</button>
     <button class="btn icon" id="setBtn" title="Settings" aria-label="Settings">⚙️</button>
   </div>
 </header>
 
+<nav class="tabbar">
+  <div class="seg tabs" id="tabs"></div>
+  <div class="seg tabs" id="viewSeg" title="Lay ideas out by stage, or by the agent or app they belong to"></div>
+  <span class="grow"></span>
+  <button class="btn" id="trayBtn" hidden title="Ideas and challenges the AI suggested — keep or dismiss them">✨ Suggested <span class="badge" id="trayN">0</span></button>
+  <button class="btn" id="capBtn" hidden>📎 Capture page</button>
+  <button class="btn" id="findBtn" title="The AI looks for recurring problems and suggests them as challenges">🔍 Find challenges</button>
+</nav>
+
 <div class="banner" id="demoBanner" hidden>Demo board — sample ideas, nothing is saved.</div>
+<div class="banner click" id="aiBanner" hidden></div>
 
 <div class="capture">
   <div class="capture-in">
-    <textarea id="thought" rows="1" placeholder="Dump a thought — messy is fine. Several ideas at once? Claude splits them into cards."></textarea>
+    <textarea id="thought" rows="1"></textarea>
     <div class="opts">
-      <label class="sw" id="shapeSw" title="Claude turns the thought into a clear card"><input type="checkbox" id="autoShape"><b></b>✨ Shape</label>
+      <label class="sw" id="shapeSw"><input type="checkbox" id="autoShape"><b></b>✨ Shape</label>
       <button class="btn primary" id="addBtn">Add <span class="hint" style="color:inherit;opacity:.75">⏎</span></button>
     </div>
   </div>
@@ -281,7 +355,7 @@ body.ed-work .logo{background:linear-gradient(145deg,#99f6e4,#14b8a6 55%,#0f766e
 <main class="board" id="board"></main>
 
 <div class="scrim" id="scrim"></div>
-<aside class="drawer" id="drawer" aria-label="Idea details"></aside>
+<aside class="drawer" id="drawer" aria-label="Details"></aside>
 
 <div class="selbar" id="selbar">
   <span class="n" id="selN">0 selected</span>
@@ -296,6 +370,7 @@ body.ed-work .logo{background:linear-gradient(145deg,#99f6e4,#14b8a6 55%,#0f766e
 <div class="pop" id="setPop"></div>
 <div class="pop" id="binPop"></div>
 <div class="pop" id="nextPop"></div>
+<div class="pop wide" id="trayPop"></div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -306,6 +381,17 @@ const STAGES = [
   {k:'shipped',  icon:'🚀', name:'Shipped',  hint:'Done and released'},
   {k:'parked',   icon:'🧊', name:'Parked',   hint:'Not now — maybe later'},
 ];
+const CSTAGES = [
+  {k:'open',   icon:'🧗', name:'Open',      hint:'Problems waiting for an idea · hottest first', c:'ch-open'},
+  {k:'ideas',  icon:'💡', name:'Has ideas', hint:'Ideas on the way',                            c:'ch-ideas'},
+  {k:'solved', icon:'✅', name:'Solved',    hint:'Solved when a linked idea ships',              c:'ch-solved'},
+];
+const QUADS = [
+  {k:'high:low',  icon:'🎯', name:'Quick wins', hint:'High impact · low effort — do these first', c:'#10b981'},
+  {k:'high:high', icon:'🚀', name:'Big bets',   hint:'High impact · high effort — plan them',     c:'#8b5cf6'},
+  {k:'low:low',   icon:'🧩', name:'Fill-ins',   hint:'Low impact · low effort — for a spare hour', c:'#0ea5e9'},
+  {k:'low:high',  icon:'🕳️', name:'Money pits', hint:'Low impact · high effort — think twice',    c:'#94a3b8'},
+];
 const TYPES = {agent:{icon:'🤖',name:'New agent'}, enhancement:{icon:'✨',name:'Enhancement'}, fix:{icon:'🐞',name:'Fix'}, chore:{icon:'🧹',name:'Chore'}};
 const HOMES = {
   personal:{icon:'🏠',name:'Personal',hint:'Ships to your public GitHub — anyone can use it and help build it.'},
@@ -313,13 +399,19 @@ const HOMES = {
   local:{icon:'🔒',name:'Local',hint:'Stays on this Mac — never pushed anywhere.'},
 };
 const PRIO = {high:{icon:'🔥',name:'High'}, med:{icon:'⚡',name:'Medium'}, low:{icon:'🌱',name:'Low'}};
+const ORIGINS = {you:{icon:'👤',name:'You'}, ai:{icon:'✨',name:'AI'}, page:{icon:'🌐',name:'From a page'}, teammate:{icon:'🤝',name:'Teammate'}};
+const OFTEN = {daily:'Daily', weekly:'Weekly', monthly:'Monthly', rare:'Rarely'};
 const AV = ['#8b5cf6','#3b82f6','#10b981','#f59e0b','#ef4444','#0ea5e9','#ec4899','#14b8a6'];
 
-const PERSONAL = {name:'Idea Forge', symbol:'💡', flavor:'personal', claudeTools:false, repo:'https://github.com/Sravankumartangudu/idea-forge', repoLabel:'GitHub',
-  models:[['haiku', 'Haiku · fast'], ['sonnet', 'Sonnet'], ['opus', 'Opus · best']], appearances:[['system', 'System'], ['light', 'Light'], ['dark', 'Dark']]};
-const S = {doc:{version:1,ideas:[]}, apps:[], people:[], claude:false, demo:false, settings:{}, file:'', version:'', ed:PERSONAL,
-           q:'', fType:'all', fHome:'all', fApp:'', selecting:false, picked:new Set(), open:null, shaping:new Set(), asking:new Set(), nexting:false, deferred:null};
-const tools = () => S.ed.claudeTools && S.claude;
+const PERSONAL = {name:'Idea Forge', symbol:'💡', flavor:'personal', repo:'https://github.com/Sravankumartangudu/idea-forge', repoLabel:'GitHub',
+  tools:'', dataFolder:true, pageReading:false, appearances:[['system', 'System'], ['light', 'Light'], ['dark', 'Dark']]};
+const NO_AI = {provider:'', word:'AI', ready:false, problem:'', model:'', models:[], providers:[], claude:false, codex:false};
+const S = {doc:{version:1, ideas:[], challenges:[]}, apps:[], people:[], ai:NO_AI, updates:{}, hotkeys:'', demo:false, settings:{}, file:'', version:'', ed:PERSONAL,
+           customFolder:false, tab:localStorage.tab || 'ideas', view:localStorage.view || 'stages',
+           q:'', fType:'all', fHome:'all', fGroup:'', fOrigin:'all', selecting:false, picked:new Set(), open:null, openKind:'idea',
+           shaping:new Set(), chShaping:new Set(), sparking:new Set(), asking:new Set(),
+           nexting:false, placing:false, capturing:false, finding:false, testing:false, testResult:null, deferred:null};
+if (!['ideas', 'challenges', 'matrix'].includes(S.tab)) S.tab = 'ideas';
 
 const $ = (s, r=document) => r.querySelector(s);
 const $$ = (s, r=document) => [...r.querySelectorAll(s)];
@@ -327,15 +419,34 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt
 const post = m => { try { webkit.messageHandlers.forge.postMessage(m) } catch (e) { console.log('post', m.cmd) } };
 const now = () => new Date().toISOString();
 const ideas = () => S.doc.ideas;
+const chs = () => S.doc.challenges;
 const byId = id => ideas().find(i => i.id === id);
+const chById = id => chs().find(c => c.id === id);
 const stageOf = k => STAGES.find(s => s.k === k);
 const clip = (s, n) => s.length > n ? s.slice(0, n - 1).trimEnd() + '…' : s;
 const nameOf = i => (i.title || '').trim() || clip((i.raw || '').trim().split('\n')[0], 90) || 'Untitled idea';
+const cname = c => (c.title || '').trim() || clip((c.detail || c.raw || '').trim().split('\n')[0], 90) || 'Untitled challenge';
 const isPending = i => ['inbox','shaped','building'].includes(i.status);
 const initials = n => n.trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
 const avColor = n => AV[[...n].reduce((a, c) => a + c.charCodeAt(0), 0) % AV.length];
 const fmtDate = s => s ? new Date(s).toLocaleDateString(undefined, {day:'numeric', month:'short'}) : '';
 const appHome = name => (S.apps.find(a => a.name.toLowerCase() === (name || '').toLowerCase()) || {}).home || '';
+const aiOK = () => !!S.ai.ready;
+const word = () => S.ai.word || 'AI';
+const pageOn = () => !!(S.ed.pageReading && S.settings.pageReading);
+const originOf = x => (x.origin && x.origin.by) || 'you';
+/// Only web links from pages or the AI become clickable (never javascript: or file:).
+const safeUrl = u => /^https?:\/\//i.test(u || '') ? u : '';
+const groupOf = i => (i.group || '').trim() || (i.app || '').trim();
+const ago = s => { if (!s) return ''; const m = Math.round((Date.now() - new Date(s)) / 60000);
+  return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : m < 1440 ? Math.round(m / 60) + 'h ago' : Math.round(m / 1440) + 'd ago'; };
+const keys = () => S.hotkeys || (S.settings.hotkeyShift ? '⌃⌥⇧' : '⌃⌥');
+/// How much a challenge is worth solving: impact × how often × times hit (same as the app's).
+const heat = c => ({high:3, med:2, low:1}[c.impact] || 2) * ({daily:4, weekly:3, monthly:2, rare:1}[c.often] || 2) * Math.max(1, c.hits || 1);
+const linkedIdeas = c => ideas().filter(i => i.challenge === c.id && !['removed', 'suggested'].includes(i.status));
+const chStage = c => c.status === 'solved' ? 'solved' : linkedIdeas(c).some(i => i.status !== 'parked') ? 'ideas' : 'open';
+const tray = () => ({ideas:ideas().filter(i => i.status === 'suggested'), chs:chs().filter(c => c.status === 'suggested')});
+const groups = () => [...new Set(ideas().filter(i => !['removed', 'suggested'].includes(i.status)).map(groupOf).filter(Boolean))].sort((a, b) => a.localeCompare(b));
 
 // ---------- Persistence ----------
 let saveTimer = null;
@@ -345,24 +456,41 @@ function save(soon) {
   const go = () => { saveTimer = null; post({cmd:'save', doc:S.doc}); };
   if (soon) saveTimer = setTimeout(go, 350); else go();
 }
-function touch(i) { i.updated = now(); }
+function touch(x) { x.updated = now(); }
+const nextN = () => Math.max(0, ...ideas().map(i => i.n || 0)) + 1;
+const nextCN = () => Math.max(0, ...chs().map(c => c.n || 0)) + 1;
+const newId = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 function newIdea(fields) {
-  const n = Math.max(0, ...ideas().map(i => i.n || 0)) + 1;
-  const col = ideas().filter(i => i.status === (fields.status || 'inbox'));
+  const status = fields.status || 'inbox';
+  const col = ideas().filter(i => i.status === status);
   const order = col.length ? Math.min(...col.map(i => i.order ?? 0)) - 1 : 0;
   const t = now();
-  return Object.assign({id:'i' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), n, title:'', raw:'', summary:'', why:'',
-    type:'', home:'', app:'', status:'inbox', priority:'med', steps:[], helpers:[], tags:[], order, created:t, updated:t}, fields);
+  return Object.assign({id:newId('i'), n: status === 'suggested' ? null : nextN(), title:'', raw:'', summary:'', why:'',
+    type:'', home:'', app:'', group:'', status, priority:'med', steps:[], helpers:[], tags:[], order, created:t, updated:t}, fields);
+}
+function newChallenge(fields) {
+  const t = now();
+  const status = fields.status || 'open';
+  return Object.assign({id:newId('c'), n: status === 'suggested' ? null : nextCN(), title:'', detail:'', where:'', raw:'',
+    often:'weekly', impact:'med', status, hits:1, created:t, updated:t}, fields);
 }
 
 // ---------- Bridge (called by the app) ----------
+function notifyOrToast(bg, title, body, count) {
+  if (bg) post({cmd:'notify', title, body, open: count ? 'forge.showTray()' : ''});
+  else toast(body, count ? () => openTray() : null, 'Review');
+}
 window.forge = {
   load(state) {
     if (drag && drag.started) { S.deferred = state; return; }
     // A typing save still waiting to go out is newer than the app's copy — keep it.
     if (!saveTimer) S.doc = state.doc && Array.isArray(state.doc.ideas) ? state.doc : {version:1, ideas:[]};
-    S.apps = state.apps || []; S.people = state.people || []; S.claude = !!state.claude; S.demo = !!state.demo;
-    S.settings = state.settings || {}; S.file = state.file || ''; S.version = state.version || '';
+    S.doc.challenges = S.doc.challenges || [];
+    S.apps = state.apps || []; S.people = state.people || []; S.demo = !!state.demo;
+    S.ai = Object.assign({}, NO_AI, state.ai || {});
+    if (S.demo) S.ai.problem = '';
+    S.updates = state.updates || {}; S.hotkeys = state.hotkeys || '';
+    S.settings = state.settings || {}; S.file = state.file || ''; S.version = state.version || ''; S.customFolder = !!state.customFolder;
     S.ed = Object.assign({}, PERSONAL, state.edition || {});
     applyEdition();
     for (const i of ideas()) {
@@ -370,6 +498,7 @@ window.forge = {
       // An answer that was on its way when the app quit never arrives.
       for (const c of i.chat || []) if (c.pending && !S.asking.has(i.id)) { delete c.pending; c.err = 'Interrupted — ask again.'; }
     }
+    for (const c of chs()) c.status = c.status || 'open';
     $('#demoBanner').hidden = !S.demo;
     renderAll();
   },
@@ -377,13 +506,13 @@ window.forge = {
     S.shaping.delete(id);
     const i = byId(id);
     if (!i) return;
-    if (err || !cards || !cards.length) { i.shapeError = err || 'Claude returned nothing.'; render(); return; }
+    if (err || !cards || !cards.length) { i.shapeError = err || `${word()} returned nothing.`; render(); return; }
     delete i.shapeError;
     applyCard(i, cards[0]);
     if (i.status === 'inbox') i.status = 'shaped';
     let after = i.order ?? 0;
     for (const c of cards.slice(1)) {
-      const extra = newIdea({raw:i.raw, status:i.status});
+      const extra = newIdea({raw:i.raw, status:i.status, origin:i.origin, challenge:i.challenge});
       applyCard(extra, c);
       extra.order = after += 0.001;
       ideas().push(extra);
@@ -393,6 +522,43 @@ window.forge = {
     save(); renderAll();
     toast(cards.length > 1 ? `✨ Shaped into ${cards.length} cards` : '✨ Shaped: ' + nameOf(i));
   },
+  challengeShaped(id, obj, err) {
+    S.chShaping.delete(id);
+    const c = chById(id);
+    if (!c) return;
+    if (err || !obj) { c.shapeError = err || `${word()} returned nothing.`; render(); return; }
+    delete c.shapeError;
+    const same = obj.same && chs().find(x => x.n === obj.same && x !== c && ['open', 'solved'].includes(x.status));
+    if (same) {
+      // Already on the list: count it as another hit instead of a second card.
+      same.hits = (same.hits || 1) + (c.hits || 1); same.lastHit = now(); touch(same);
+      S.doc.challenges = chs().filter(x => x !== c);
+      if (S.open === c.id) closeDrawer();
+      flashIds.add(same.id);
+      save(); renderAll();
+      toast(`🧗 Same as C#${same.n} — counted as hit ×${same.hits}`);
+      return;
+    }
+    Object.assign(c, {title:obj.title || c.title, detail:obj.detail || c.detail, where:obj.where || c.where,
+                      often:obj.often || c.often, impact:obj.impact || c.impact, shapedAt:now()});
+    touch(c); flashIds.add(c.id);
+    save(); renderAll();
+    if (S.settings.autoSpark !== false && c.status === 'open' && !linkedIdeas(c).length) spark(c);
+  },
+  sparked(id, cards, err) {
+    S.sparking.delete(id);
+    const c = chById(id);
+    if (!c) return;
+    if (err || !cards || !cards.length) { c.sparkError = err || `${word()} had no ideas.`; render(); return; }
+    delete c.sparkError;
+    for (const card of cards) {
+      const i = newIdea({status:'suggested', challenge:c.id, origin:{by:'ai', label:`Sparked from C#${c.n ?? '–'}`}});
+      applyCard(i, card);
+      ideas().push(i);
+    }
+    save(); renderAll();
+    toast(`✨ ${cards.length} idea${cards.length > 1 ? 's' : ''} for C#${c.n ?? '–'} — in Suggested`, () => openTray(), 'Review');
+  },
   answered(id, res, err) {
     S.asking.delete(id);
     const i = byId(id);
@@ -400,7 +566,7 @@ window.forge = {
     const q = (i.chat || [])[0];
     if (q && q.pending) {
       delete q.pending;
-      if (err || !res) q.err = err || 'Claude returned nothing.';
+      if (err || !res) q.err = err || `${word()} returned nothing.`;
       else { q.a = res.answer || ''; q.steps = (res.steps || []).filter(Boolean); }
       q.at = now();
       save();
@@ -410,23 +576,88 @@ window.forge = {
   whatNext() { whatNext(); },
   nextPicks(res, err) {
     S.nexting = false;
-    if (err || !res) S.nextErr = err || 'Claude returned nothing.';
+    if (err || !res) S.nextErr = err || `${word()} returned nothing.`;
     else { delete S.nextErr; S.doc.next = {at:now(), picks:(res.picks || []).filter(p => ideas().some(i => i.n === p.n && isPending(i))), note:res.note || ''}; save(); }
     render();
     if (!$('#nextPop').classList.contains('on')) togglePop('nextPop'); else renderNext();
   },
-  built(ok) { toast(ok ? '🚀 Opened Claude Code in Terminal' : '⚠︎ Couldn\'t open Terminal'); },
-  focusCapture() { closeDrawer(); setTimeout(() => $('#thought').focus(), 60); },
+  placed(res, err) {
+    S.placing = false;
+    if (err || !res) { toast('⚠︎ ' + (err || `${word()} returned nothing.`)); render(); return; }
+    let k = 0;
+    for (const p of res.places || []) {
+      const i = ideas().find(x => x.n === p.n && isPending(x));
+      if (!i) continue;
+      i.impact = p.impact; i.effort = p.effort; i.placeWhy = p.why || ''; touch(i); flashIds.add(i.id); k++;
+    }
+    save(); render();
+    toast(`✨ Placed ${k} idea${k === 1 ? '' : 's'} on the grid`);
+  },
+  // 📎 A page came back read: its challenges and ideas wait in the tray. Only a neutral label, the
+  // source and the link are kept — never the page's own title or text.
+  pageRead(p, err, bg) {
+    S.capturing = false;
+    if (err || !p) { renderTabs(); notifyOrToast(bg, '📎 Couldn\'t read the page', '📎 ' + (err || 'Nothing came back.'), 0); return; }
+    const r = p.result || {};
+    const origin = {by:'page', source:r.source || p.app || '', label:r.label || '', url:p.url || ''};
+    const got = (r.challenges || []).map(c => takeChallenge(c, origin));
+    const link = got.length === 1 ? (got[0].hit || got[0].added) : null;
+    for (const card of r.ideas || []) {
+      const i = newIdea({status:'suggested', origin, challenge: link ? link.id : ''});
+      applyCard(i, card);
+      ideas().push(i);
+    }
+    save(); renderAll();
+    const added = got.filter(g => g.added).length, hits = got.filter(g => g.hit), n = added + (r.ideas || []).length;
+    const parts = [added && `${added} challenge${added > 1 ? 's' : ''}`, (r.ideas || []).length && `${r.ideas.length} idea${r.ideas.length > 1 ? 's' : ''}`].filter(Boolean);
+    let body = parts.length ? `Found ${parts.join(' and ')} — in ✨ Suggested.` : (hits.length ? '' : `Nothing to add. ${r.note || ''}`.trim());
+    if (hits.length) body += (body ? ' ' : '') + hits.map(h => `C#${h.hit.n} hit again (×${h.hit.hits}).`).join(' ');
+    notifyOrToast(bg, '📎 ' + [r.label, r.source].filter(Boolean).join(' · '), (bg ? '' : '📎 ') + body, n);
+  },
+  found(res, err, bg) {
+    S.finding = false;
+    if (err || !res) { renderTabs(); if (!bg) toast('🔍 ' + (err || 'Nothing came back.')); return; }
+    const got = (res.challenges || []).map(c => takeChallenge(c, {by:'ai', label:'🔍 Found', source:c.source || '', url:c.url || ''}));
+    S.settings.lastFind = now();
+    save(); renderAll();
+    const added = got.filter(g => g.added).length, hits = got.filter(g => g.hit).length;
+    const body = (added ? `Found ${added} challenge${added > 1 ? 's' : ''} — in ✨ Suggested.` : 'No new challenges.')
+      + (hits ? ` ${hits} already on your list got another hit.` : '') + (res.note ? ' ' + res.note : '');
+    notifyOrToast(bg, '🔍 Find challenges', (bg ? '' : '🔍 ') + body, added);
+  },
+  quick(kind, text) { kind === 'challenge' ? addChallenge(text) : addThought(text); },
+  tab(t) { setTab(t); },
+  showTray() { openTray(); },
+  openSettings() { closeDrawer(); $$('.pop').forEach(p => p.classList.remove('on')); renderSettings(); $('#setPop').classList.add('on'); },
+  tested(ok, text) { S.testing = false; S.testResult = {ok, text}; if ($('#setPop').classList.contains('on')) renderSettings(); },
+  toast(text) { toast(text); },
+  open(url) { post({cmd:'open', url}); },
+  built(ok) { toast(ok ? '🚀 Opened in Terminal' : '⚠︎ Couldn\'t open Terminal'); },
+  focusCapture() { closeDrawer(); if (S.tab === 'matrix') setTab('ideas'); setTimeout(() => $('#thought').focus(), 60); },
   capture(text) { addThought(text); },
-  openCard(id) { if (byId(id)) openDrawer(id); },
+  openCard(id) { if (byId(id)) openDrawer(id); else if (chById(id)) openChallenge(id); },
 };
+
+/// A challenge the AI found: another hit on one already listed, else a new suggestion in the tray.
+function takeChallenge(c, origin) {
+  const same = (c.same && chs().find(x => x.n === c.same && ['open', 'solved'].includes(x.status)))
+    || chs().find(x => x.status === 'suggested' && cname(x).toLowerCase() === (c.title || '').trim().toLowerCase());
+  if (same) { same.hits = (same.hits || 1) + 1; same.lastHit = now(); touch(same); return {hit:same}; }
+  const x = newChallenge({status:'suggested', title:c.title || '', detail:c.detail || '', where:c.where || '',
+                          often:c.often || 'weekly', impact:c.impact || 'med', origin});
+  chs().push(x);
+  return {added:x};
+}
 
 function applyCard(i, c) {
   const app = S.apps.find(a => a.name.toLowerCase() === (c.app || '').toLowerCase());
   const done = new Set(i.steps.filter(s => s.done).map(s => s.t.toLowerCase()));
+  // Reuse a group already on the board when the AI spells it a little differently.
+  const g = (c.group || '').trim(), known = groups().find(x => x.toLowerCase() === g.toLowerCase());
   Object.assign(i, {
     title: c.title || i.title, summary: c.summary || '', why: c.why || '',
     type: c.type || i.type, app: app ? app.name : (c.app || ''),
+    group: i.group || known || g || (app ? app.name : ''),
     home: c.home || (app && app.home) || i.home || '',
     priority: c.priority || i.priority || 'med',
     steps: (c.steps || []).map(t => ({t, done: done.has(t.toLowerCase())})),
@@ -437,13 +668,39 @@ function applyCard(i, c) {
   touch(i);
 }
 
+function needAI() {
+  if (aiOK()) return true;
+  toast(S.demo ? 'Demo board — no AI here' : '⚠︎ ' + (S.ai.problem || 'Set up an AI in Settings'), S.demo ? null : () => forge.openSettings(), 'Settings');
+  return false;
+}
+
 function shape(i, single) {
-  if (!S.claude) { toast('Claude CLI not found — install Claude Code to shape ideas'); return; }
+  if (!needAI()) return;
   delete i.shapeError;
   S.shaping.add(i.id);
   let text = i.raw || i.title;
   if (single && (i.title || i.summary)) text += `\n\n(Current card — title: ${i.title}; notes: ${i.summary})`;
   post({cmd:'shape', id:i.id, text, single});
+  render();
+}
+function shapeChallenge(c) {
+  if (!needAI()) return;
+  delete c.shapeError;
+  S.chShaping.add(c.id);
+  let text = c.raw || c.title;
+  if (c.shapedAt && (c.title || c.detail)) text += `\n\n(Current card — title: ${c.title}; detail: ${c.detail})`;
+  post({cmd:'shapeChallenge', id:c.id, text});
+  render();
+}
+function chBrief(c) {
+  return [`C#${c.n ?? '–'} ${cname(c)}`, c.detail, c.where && `Where: ${c.where}`,
+          `How often: ${OFTEN[c.often] || c.often} · impact: ${c.impact} · hit ${c.hits || 1}×`].filter(Boolean).join('\n');
+}
+function spark(c) {
+  if (S.sparking.has(c.id) || !needAI()) return;
+  delete c.sparkError;
+  S.sparking.add(c.id);
+  post({cmd:'spark', id:c.id, text:chBrief(c)});
   render();
 }
 
@@ -454,24 +711,72 @@ function applyEdition() {
   $('.logo').textContent = e.symbol;
   const base = e.name.replace(/ Work$/, '');
   $('#brandName').innerHTML = esc(base) + (base !== e.name ? '<span class="ed-pill">WORK</span>' : '');
-  $('#nextBtn').hidden = !e.claudeTools;
-  $('#nextBtn').disabled = !S.claude;
 }
 
-// ---------- Claude tools (work edition) ----------
+// ---------- Tray (✨ Suggested) ----------
+function keepIdea(i) {
+  i.n = nextN();
+  setStatus(i, i.title ? 'shaped' : 'inbox');
+  const col = ideas().filter(x => x.status === i.status && x !== i);
+  i.order = col.length ? Math.min(...col.map(x => x.order ?? 0)) - 1 : 0;
+  flashIds.add(i.id);
+}
+function keepChallenge(c) {
+  c.n = nextCN(); c.status = 'open'; touch(c); flashIds.add(c.id);
+  // Its suggested ideas now say which challenge they're for.
+  for (const i of ideas()) if (i.challenge === c.id && i.status === 'suggested' && i.origin) i.origin.label = i.origin.label || `For C#${c.n}`;
+  if (S.settings.autoSpark !== false && aiOK() && !ideas().some(i => i.challenge === c.id && i.status !== 'removed')) spark(c);
+}
+function dismissIdea(i) { S.doc.ideas = ideas().filter(x => x !== i); }
+function dismissChallenge(c) {
+  S.doc.challenges = chs().filter(x => x !== c);
+  S.doc.ideas = ideas().filter(i => !(i.challenge === c.id && i.status === 'suggested'));
+  for (const i of ideas()) if (i.challenge === c.id) i.challenge = '';
+}
+function openTray() { closeDrawer(); $$('.pop').forEach(p => p.classList.remove('on')); renderTray(); $('#trayPop').classList.add('on'); }
+function renderTray() {
+  const t = tray();
+  const src = x => x.origin && safeUrl(x.origin.url) ? ` <a href="${esc(safeUrl(x.origin.url))}" title="Open the source">↗</a>` : '';
+  const item = (kind, x) => {
+    const c = kind === 'idea' && x.challenge ? chById(x.challenge) : null;
+    return `<div class="sug">
+      <div class="sug-top">${kind === 'idea' ? '💡 Idea' : '🧗 Challenge'} ${originChip(x, true)}${src(x)}
+        ${c ? `<span class="chip chl" data-gochal="${esc(c.id)}">for ${c.n ? 'C#' + c.n : 'a suggested challenge'}</span>` : ''}
+        ${kind === 'idea' && groupOf(x) ? `<span class="chip">▤ ${esc(groupOf(x))}</span>` : ''}</div>
+      <div class="t" data-peek="${esc(x.id)}">${esc(kind === 'idea' ? nameOf(x) : cname(x))}</div>
+      ${(kind === 'idea' ? x.summary : x.detail) ? `<div class="w">${esc(kind === 'idea' ? x.summary : x.detail)}</div>` : ''}
+      <div class="sug-act"><button class="btn primary" data-keep="${esc(x.id)}">Keep</button><button class="btn" data-dismiss="${esc(x.id)}">Dismiss</button></div>
+    </div>`;
+  };
+  const n = t.ideas.length + t.chs.length;
+  $('#trayPop').innerHTML = `<h4>✨ Suggested (${n})</h4>
+    <div class="hint" style="margin:-4px 0 10px">Found or sparked by ${esc(word())}. Keep what's useful — it joins your board; dismiss the rest.</div>` +
+    (n ? (t.chs.length ? `<div class="grp">🧗 Challenges (${t.chs.length})</div>` + t.chs.map(c => item('ch', c)).join('') : '')
+       + (t.ideas.length ? `<div class="grp">💡 Ideas (${t.ideas.length})</div>` + t.ideas.map(i => item('idea', i)).join('') : '')
+       + `<div class="sug-act" style="margin-top:4px"><button class="btn" data-keepall>Keep all</button><button class="btn danger" data-dismissall>Dismiss all</button></div>`
+     : `<div class="hint">Nothing waiting. ${pageOn() ? '📎 Capture a page, ' : ''}🔍 Find challenges or ✨ Spark ideas for a challenge, and suggestions land here.</div>`);
+}
+
+// ---------- AI on the board ----------
 function boardText() {
   const lines = [];
   for (const k of ['building', 'shaped', 'inbox']) for (const i of ideas().filter(x => x.status === k).sort((a, b) => (a.order ?? 0) - (b.order ?? 0))) {
-    const st = i.steps || [];
-    lines.push(`#${i.n} [${k}] ${nameOf(i)}` + [TYPES[i.type] && TYPES[i.type].name, i.app && 'for ' + i.app, PRIO[i.priority] && PRIO[i.priority].name + ' priority',
+    const st = i.steps || [], c = i.challenge && chById(i.challenge);
+    lines.push(`#${i.n} [${k}] ${nameOf(i)}` + [TYPES[i.type] && TYPES[i.type].name, groupOf(i) && 'group ' + groupOf(i), PRIO[i.priority] && PRIO[i.priority].name + ' priority',
+      c && c.n && `solves C#${c.n} (${OFTEN[c.often] || ''}, ${c.impact} impact, hit ${c.hits || 1}×)`,
+      i.impact && `${i.impact} impact / ${i.effort} effort`,
       st.length && `${st.filter(s => s.done).length}/${st.length} steps done`, 'added ' + fmtDate(i.created), i.updated && 'touched ' + fmtDate(i.updated)].filter(Boolean).map(x => ' · ' + x).join('')
       + (i.summary ? `\n   ${i.summary}` : ''));
+  }
+  const open = chs().filter(c => c.status === 'open').sort((a, b) => heat(b) - heat(a));
+  if (open.length) {
+    lines.push('', 'Open challenges:');
+    for (const c of open) lines.push(`C#${c.n} ${cname(c)} · ${OFTEN[c.often] || ''} · ${c.impact} impact · hit ${c.hits || 1}× · ${linkedIdeas(c).length} ideas`);
   }
   return lines.join('\n');
 }
 function whatNext() {
-  if (!S.ed.claudeTools) return;
-  if (!S.claude) { toast('Claude CLI not found — install Claude Code first'); return; }
+  if (!needAI()) return;
   if (!ideas().some(isPending)) { toast('Nothing pending to pick from'); return; }
   if (!S.nexting) { S.nexting = true; delete S.nextErr; post({cmd:'next', board:boardText()}); }
   $$('.pop').forEach(p => p.id !== 'nextPop' && p.classList.remove('on'));
@@ -480,7 +785,7 @@ function whatNext() {
 function renderNext() {
   const nx = S.doc.next, picks = (nx && nx.picks || []).map(p => ({p, i:ideas().find(x => x.n === p.n)})).filter(x => x.i && isPending(x.i));
   $('#nextPop').innerHTML = `<h4>🎯 What to build next</h4>` +
-    (S.nexting ? `<div class="shimmer" style="color:var(--accent-ink)">Claude is reading your board</div>` : '') +
+    (S.nexting ? `<div class="shimmer" style="color:var(--accent-ink)">${esc(word())} is reading your board</div>` : '') +
     (S.nextErr ? `<div class="err">⚠︎ ${esc(S.nextErr)}</div>` : '') +
     (!S.nexting && picks.length ? picks.map(({p, i}, k) => `<div class="pick-row" data-open="${esc(i.id)}"><span class="rank">${k + 1}</span>
         <div><div class="t"><span class="ref">#${i.n}</span> ${esc(nameOf(i))}</div><div class="w">${esc(p.why)}</div></div></div>`).join('')
@@ -488,39 +793,77 @@ function renderNext() {
       + `<div class="hint" style="margin-top:10px">Picked ${fmtDate(nx.at)} · <a href="#" data-renext style="color:var(--accent-ink)">Ask again</a></div>` : '') +
     (!S.nexting && !picks.length && !S.nextErr ? '<div class="hint">No picks yet.</div>' : '');
 }
+function placeAll(all) {
+  if (S.placing || !needAI()) return;
+  const list = ideas().filter(i => isPending(i) && (all || !i.impact));
+  if (!list.length) { toast('Every pending idea is already placed'); return; }
+  S.placing = true;
+  post({cmd:'place', list:list.map(i => `#${i.n} ${nameOf(i)}${i.summary ? ' — ' + i.summary : ''}${(i.steps || []).length ? ` (${i.steps.length} steps)` : ''}`).join('\n')});
+  render();
+}
+function capturePage() {
+  if (!pageOn() || S.capturing) return;
+  if (!needAI()) return;
+  S.capturing = true; renderTabs();
+  post({cmd:'capturePage'});
+}
+function findChallenges() {
+  if (S.finding || !needAI()) return;
+  S.finding = true; renderTabs();
+  post({cmd:'findChallenges'});
+}
 const ASKS = [['🧭', 'Make a build plan', 'Make a step-by-step build plan for this.'], ['⚠️', 'What could go wrong?', 'What could go wrong or be hard about this, and how do I avoid it?'],
               ['✂️', 'Smallest version', 'What is the smallest useful first version I could ship quickly?'], ['🤝', 'Who could help?', 'What kind of people or teams could help with this, and what should I ask them?']];
 function ask(i, q) {
   q = (q || '').trim();
-  if (!q || S.asking.has(i.id)) return;
-  if (!S.claude) { toast('Claude CLI not found — install Claude Code first'); return; }
+  if (!q || S.asking.has(i.id) || !needAI()) return;
   i.chat = [{q, pending:true, at:now()}, ...(i.chat || []).filter(c => !c.pending)].slice(0, 8);
   S.asking.add(i.id);
   post({cmd:'ask', id:i.id, brief:brief(i), q});
   save(); renderDrawer();
 }
 function askHTML(i) {
-  const busy = S.asking.has(i.id), dis = busy || !S.claude ? 'disabled' : '';
-  return `<div class="field"><span class="lbl">💬 Ask Claude</span>
+  const busy = S.asking.has(i.id), dis = busy || !aiOK() ? 'disabled' : '';
+  return `<div class="field"><span class="lbl">💬 Ask ${esc(word())}</span>
     <div class="ask-chips">${ASKS.map(([ic, l, q], k) => `<button type="button" data-ask="${k}" ${dis} title="${esc(q)}">${ic} ${l}</button>`).join('')}</div>
-    <div class="ask-in"><input type="text" id="askQ" placeholder="${S.claude ? 'Ask anything about this idea' : 'Claude CLI not found'}" ${S.claude ? '' : 'disabled'}><button class="btn primary" data-act="ask" ${dis}>Ask</button></div>
+    <div class="ask-in"><input type="text" id="askQ" placeholder="${aiOK() ? 'Ask anything about this idea' : esc(S.ai.problem || 'Set up an AI in Settings')}" ${aiOK() ? '' : 'disabled'}><button class="btn primary" data-act="ask" ${dis}>Ask</button></div>
     ${(i.chat || []).map((c, k) => `<div class="qa"><div class="q">💬 ${esc(c.q)}${c.pending ? '' : `<button class="x" data-chatdel="${k}" title="Forget this answer" aria-label="Forget">✕</button>`}</div>
-      ${c.pending ? `<div class="shimmer" style="color:var(--accent-ink)">Claude is thinking</div>` : (c.err ? `<div class="a bad">⚠︎ ${esc(c.err)}</div>` : `<div class="a">${esc(c.a)}</div>`)}
+      ${c.pending ? `<div class="shimmer" style="color:var(--accent-ink)">${esc(word())} is thinking</div>` : (c.err ? `<div class="a bad">⚠︎ ${esc(c.err)}</div>` : `<div class="a">${esc(c.a)}</div>`)}
       ${c.steps && c.steps.length ? `<ol>${c.steps.map(t => `<li>${esc(t)}</li>`).join('')}</ol><button class="btn use" data-usesteps="${k}">Use as build steps</button>` : ''}</div>`).join('')}
   </div>`;
 }
 
 // ---------- Capture ----------
-function addThought(text) {
+function addThought(text, extra) {
   text = (text || '').trim();
   if (!text) return;
   const first = text.split('\n')[0];
-  const i = newIdea({raw:text, title: first.length <= 80 ? first : ''});
+  const i = newIdea(Object.assign({raw:text, title: first.length <= 80 ? first : '', group:S.fGroup || ''}, extra || {}));
   ideas().push(i);
   flashIds.add(i.id);
   save();
-  if (S.settings.autoShape !== false && S.claude) shape(i, false); else render();
+  if (S.settings.autoShape !== false && aiOK()) shape(i, false); else render();
+  if (S.tab !== 'ideas' && !extra) setTab('ideas');
   toast('💭 Added to Inbox');
+  return i;
+}
+function addChallenge(text) {
+  text = (text || '').trim();
+  if (!text) return;
+  const lines = text.split('\n'), first = lines[0];
+  const c = newChallenge({raw:text, title:clip(first, 80), detail: first.length > 80 ? text : lines.slice(1).join('\n').trim()});
+  chs().push(c);
+  flashIds.add(c.id);
+  save();
+  if (S.tab !== 'challenges') setTab('challenges');
+  if (S.settings.autoShape !== false && aiOK()) shapeChallenge(c);
+  else { render(); if (S.settings.autoSpark !== false && aiOK()) spark(c); }
+  toast(`🧗 Challenge C#${c.n} added`);
+}
+function submitCapture() {
+  const t = $('#thought');
+  S.tab === 'challenges' ? addChallenge(t.value) : addThought(t.value);
+  t.value = ''; autosize(t);
 }
 
 // ---------- Rendering ----------
@@ -528,17 +871,36 @@ const flashIds = new Set();
 function matches(i) {
   if (S.fType !== 'all' && (i.type || 'none') !== S.fType) return false;
   if (S.fHome !== 'all' && (i.home || 'none') !== S.fHome) return false;
-  if (S.fApp && (i.app || '') !== S.fApp) return false;
+  if (S.fGroup && groupOf(i) !== S.fGroup) return false;
+  if (S.fOrigin !== 'all' && originOf(i) !== S.fOrigin) return false;
   if (S.q) {
-    const hay = [i.title, i.summary, i.raw, i.why, i.app, ...(i.tags || []), ...(i.helpers || []), '#' + i.n].join(' ').toLowerCase();
+    const c = i.challenge && chById(i.challenge);
+    const hay = [i.title, i.summary, i.raw, i.why, i.app, i.group, ...(i.tags || []), ...(i.helpers || []), '#' + i.n, c && 'C#' + c.n].join(' ').toLowerCase();
+    if (!S.q.toLowerCase().split(/\s+/).every(w => hay.includes(w))) return false;
+  }
+  return true;
+}
+function chMatches(c) {
+  if (S.fOrigin !== 'all' && originOf(c) !== S.fOrigin) return false;
+  if (S.q) {
+    const hay = [c.title, c.detail, c.where, c.raw, 'C#' + c.n, c.origin && c.origin.source].join(' ').toLowerCase();
     if (!S.q.toLowerCase().split(/\s+/).every(w => hay.includes(w))) return false;
   }
   return true;
 }
 
-function cardHTML(i) {
-  const t = TYPES[i.type], h = HOMES[i.home], p = PRIO[i.priority];
+function originChip(x, always) {
+  const by = originOf(x), o = ORIGINS[by];
+  if (by === 'you' && !always) return '';
+  const who = by === 'teammate' && x.origin.name ? x.origin.name : (x.origin && x.origin.label) || o.name;
+  const tip = [o.name, x.origin && x.origin.source, x.origin && x.origin.label].filter(Boolean).join(' · ');
+  return `<span class="chip o-${by}" title="Added by ${esc(tip)}">${o.icon} ${esc(clip(who, 22))}</span>`;
+}
+
+function cardHTML(i, withStage) {
+  const t = TYPES[i.type], h = HOMES[i.home], p = PRIO[i.priority], st = stageOf(i.status);
   const steps = i.steps || [], done = steps.filter(s => s.done).length;
+  const c = i.challenge && chById(i.challenge), g = groupOf(i);
   const cls = ['card', i.type ? 't-' + i.type : '', S.picked.has(i.id) ? 'picked' : '', S.shaping.has(i.id) ? 'shaping' : '', flashIds.has(i.id) ? 'flash' : ''].join(' ');
   const helpers = (i.helpers || []).slice(0, 4).map(n => `<span class="av" style="background:${avColor(n)}" title="${esc(n)} can help">${esc(initials(n))}</span>`).join('');
   return `<article class="${cls}" data-id="${esc(i.id)}" tabindex="0" aria-label="${esc(nameOf(i))}">
@@ -551,82 +913,217 @@ function cardHTML(i) {
     <h3>${esc(nameOf(i))}</h3>
     ${i.summary ? `<p class="sum">${esc(i.summary)}</p>` : (!i.title && i.raw ? '' : (i.raw && i.raw.trim() !== i.title ? `<p class="sum">${esc(i.raw)}</p>` : ''))}
     <div class="meta">
+      ${withStage && st ? `<span class="chip stg" style="--c:var(--${i.status})">${st.icon} ${st.name}</span>` : ''}
       ${h ? `<span class="chip h-${i.home}" title="${esc(h.hint)}">${h.icon} ${h.name}</span>` : (i.type ? `<span class="chip h-none" title="Where it ships isn't decided">🤔 Home?</span>` : '')}
-      ${i.app ? `<span class="chip" title="Enhancement for ${esc(i.app)}">${esc(i.app)}</span>` : ''}
-      ${nextRank(i) ? `<span class="chip nx" title="Claude's pick to build next">🎯 Next</span>` : ''}
-      ${(i.similar || []).slice(0, 1).map(n => `<span class="chip sim" data-goto="${n}" title="Claude thinks this overlaps with #${n}">🔁 Like #${n}</span>`).join('')}
+      ${g && !withStage ? `<span class="chip grp-chip" data-group="${esc(g)}" title="Group: ${esc(g)} — click to show only this group">▤ ${esc(g)}</span>` : ''}
+      ${c ? `<span class="chip chl" data-gochal="${esc(c.id)}" title="Solves: ${esc(cname(c))}">🧗 ${c.n ? 'C#' + c.n : 'Suggested'}</span>` : ''}
+      ${originChip(i)}
+      ${nextRank(i) ? `<span class="chip nx" title="${esc(word())}'s pick to build next">🎯 Next</span>` : ''}
+      ${(i.similar || []).slice(0, 1).map(n => `<span class="chip sim" data-goto="${n}" title="${esc(word())} thinks this overlaps with #${n}">🔁 Like #${n}</span>`).join('')}
       ${(i.tags || []).slice(0, 2).map(g => `<span class="chip">${esc(g)}</span>`).join('')}
       ${helpers ? `<span class="helpers">${helpers}</span>` : ''}
     </div>
     ${steps.length ? `<div class="progress"><div class="bar"><b style="width:${Math.round(done / steps.length * 100)}%"></b></div><span>${done}/${steps.length}</span></div>` : ''}
     ${i.status === 'shipped' && i.shippedAt ? `<div class="when">🚀 Shipped ${fmtDate(i.shippedAt)}</div>` : ''}
-    ${S.shaping.has(i.id) ? `<div class="shimmer">✨ Shaping with Claude</div>` : ''}
+    ${S.tab === 'matrix' && i.placeWhy ? `<div class="why-q">${esc(i.placeWhy)}</div>` : ''}
+    ${S.shaping.has(i.id) ? `<div class="shimmer">✨ Shaping with ${esc(word())}</div>` : ''}
     ${i.shapeError ? `<div class="err">⚠︎ <span>${esc(i.shapeError.slice(0, 140))}</span> <button data-retry="${esc(i.id)}">Retry</button></div>` : ''}
   </article>`;
 }
 
+function chCardHTML(c) {
+  const linked = linkedIdeas(c), sug = ideas().filter(i => i.challenge === c.id && i.status === 'suggested').length;
+  const cls = ['card', 'ch', 'i-' + (c.impact || 'med'), S.chShaping.has(c.id) || S.sparking.has(c.id) ? 'shaping' : '', flashIds.has(c.id) ? 'flash' : ''].join(' ');
+  return `<article class="${cls}" data-chid="${esc(c.id)}" tabindex="0" aria-label="${esc(cname(c))}">
+    <div class="card-top">
+      <span class="ref">C#${c.n ?? '–'}</span>
+      <span class="type">${esc(OFTEN[c.often] || 'Sometimes')} · ${esc({high:'🔥 High', med:'⚡ Medium', low:'🌱 Low'}[c.impact] || '')}</span>
+      <span class="hits" title="Times you've hit this">×${c.hits || 1}</span>
+    </div>
+    <h3>${esc(cname(c))}</h3>
+    ${c.detail ? `<p class="sum">${esc(c.detail)}</p>` : ''}
+    <div class="meta">
+      ${c.where ? `<span class="chip" title="Where it happens">📍 ${esc(clip(c.where, 28))}</span>` : ''}
+      ${originChip(c)}
+      ${linked.length ? `<span class="chip" title="Ideas that would solve it">💡 ${linked.length} idea${linked.length > 1 ? 's' : ''}</span>` : ''}
+      ${sug ? `<span class="chip o-ai" title="Waiting in ✨ Suggested">✨ ${sug} suggested</span>` : ''}
+    </div>
+    ${c.status === 'solved' && c.solvedAt ? `<div class="when">✅ Solved ${fmtDate(c.solvedAt)}</div>` : ''}
+    ${c.status !== 'solved' ? `<div class="ch-act">
+      <button class="mini" data-hit="${esc(c.id)}" title="Ran into it again — it moves up the list">+1 Hit again</button>
+      <button class="mini" data-spark="${esc(c.id)}" ${aiOK() && !S.sparking.has(c.id) ? '' : 'disabled'} title="${esc(word())} suggests ideas that would solve it">✨ Spark ideas</button></div>` : ''}
+    ${S.chShaping.has(c.id) ? `<div class="shimmer">✨ Shaping with ${esc(word())}</div>` : ''}
+    ${S.sparking.has(c.id) ? `<div class="shimmer">✨ Sparking ideas</div>` : ''}
+    ${c.shapeError ? `<div class="err">⚠︎ <span>${esc(c.shapeError.slice(0, 140))}</span> <button data-chretry="${esc(c.id)}">Retry</button></div>` : ''}
+    ${c.sparkError ? `<div class="err">⚠︎ <span>${esc(c.sparkError.slice(0, 140))}</span> <button data-spark="${esc(c.id)}">Retry</button></div>` : ''}
+  </article>`;
+}
+
 function nextRank(i) {
-  if (!S.ed.claudeTools || !isPending(i) || !S.doc.next) return 0;
+  if (!isPending(i) || !S.doc.next) return 0;
   return (S.doc.next.picks || []).findIndex(p => p.n === i.n) + 1;
+}
+
+function colHTML(key, color, title, count, sub, inner, empty, extra = '') {
+  return `<section class="col ${extra}" style="--c:${color}">
+    <div class="col-h"><span class="dot"></span><h2>${title}</h2><span class="count">${count}</span></div>
+    <div class="col-sub">${sub}</div>
+    <div class="list" data-drop="${esc(key)}">${inner || `<div class="empty">${empty}</div>`}</div>
+  </section>`;
+}
+const hiddenNote = (all, shown) => all - shown ? ` · ${all - shown} hidden by filters` : '';
+
+function renderStages() {
+  return STAGES.map(s => {
+    const list = ideas().filter(i => i.status === s.k).sort((a, b) => (a.order ?? 0) - (b.order ?? 0)), shown = list.filter(matches);
+    return colHTML('s:' + s.k, `var(--${s.k})`, `${s.icon} ${s.name}`, list.length, s.hint + hiddenNote(list.length, shown.length),
+      shown.map(i => cardHTML(i)).join(''), list.length ? 'No matches' : (s.k === 'inbox' ? 'Your forge is cold 🔥<br>Drop a thought above' : 'Drag a card here'));
+  }).join('');
+}
+// One column per group (an agent, or the app ideas are for); drop a card on a column to move it there.
+let groupKeys = [];
+function renderGroups() {
+  const live = ideas().filter(i => !['removed', 'suggested'].includes(i.status));
+  const rank = i => STAGES.findIndex(s => s.k === i.status);
+  const by = new Map();
+  for (const i of live) { const g = groupOf(i); by.set(g, [...(by.get(g) || []), i]); }
+  const pend = g => (by.get(g) || []).filter(isPending).length;
+  groupKeys = [...by.keys()].filter(Boolean).sort((a, b) => pend(b) - pend(a) || a.localeCompare(b));
+  for (const g of S.newGroups || []) if (!groupKeys.includes(g)) groupKeys.push(g);
+  if (S.fGroup && !groupKeys.includes(S.fGroup)) groupKeys.unshift(S.fGroup);
+  groupKeys.push('');
+  const html = groupKeys.filter(g => !S.fGroup || g === S.fGroup).map(g => {
+    const list = (by.get(g) || []).sort((a, b) => rank(a) - rank(b) || (a.order ?? 0) - (b.order ?? 0)), shown = list.filter(matches);
+    const home = HOMES[appHome(g)];
+    return colHTML('g:' + groupKeys.indexOf(g), g ? avColor(g) : 'var(--faint)', g ? `▤ ${esc(g)}` : '◌ Ungrouped', list.length,
+      (g ? `${pend(g)} pending${home ? ' · ' + home.icon + ' ' + home.name : ''}` : 'Drag a card onto a group to file it') + hiddenNote(list.length, shown.length),
+      shown.map(i => cardHTML(i, true)).join(''), list.length ? 'No matches' : (g ? 'Drag a card here' : 'Everything has a group 🎉'));
+  }).join('');
+  return html + `<section class="col add-grp"><button class="btn" data-newgroup>＋ New group</button>
+    <div class="col-sub" style="margin-top:8px">A group gathers the ideas for one agent or app — an agent you plan to build can collect many ideas before it exists.</div></section>`;
+}
+function renderChallenges() {
+  return CSTAGES.map(s => {
+    const list = chs().filter(c => ['open', 'solved'].includes(c.status) && chStage(c) === s.k)
+      .sort(s.k === 'solved' ? (a, b) => (b.solvedAt || '').localeCompare(a.solvedAt || '') : (a, b) => heat(b) - heat(a));
+    const shown = list.filter(chMatches);
+    return colHTML('c:' + s.k, `var(--${s.c})`, `${s.icon} ${s.name}`, list.length, s.hint + hiddenNote(list.length, shown.length),
+      shown.map(chCardHTML).join(''), list.length ? 'No matches' : (s.k === 'open' ? (chs().some(c => ['open', 'solved'].includes(c.status)) ? 'Nothing waiting 🎉<br>Every challenge has an idea' : 'No challenges yet 🧗<br>Write down something that slows you down') : s.k === 'ideas' ? 'Spark or link an idea to a challenge' : 'Ship a linked idea to solve one'));
+  }).join('');
+}
+function renderMatrix() {
+  const live = ideas().filter(i => isPending(i));
+  const un = live.filter(i => !i.impact).sort((a, b) => (a.order ?? 0) - (b.order ?? 0)), unShown = un.filter(matches);
+  const btn = `<button class="btn ${S.placing ? 'busy' : ''}" data-place="${un.length ? 'new' : 'all'}" ${S.placing ? 'disabled' : ''} style="margin:0 0 8px">${S.placing ? '✨ Placing…' : un.length ? `✨ Let ${esc(word())} place them` : '✨ Re-place all'}</button>`;
+  return colHTML('q:none', 'var(--faint)', '◌ Unplaced', un.length, 'Pending ideas without impact × effort yet' + hiddenNote(un.length, unShown.length),
+      btn + unShown.map(i => cardHTML(i)).join(''), '', 'unplaced')
+    + QUADS.map(q => {
+      const [imp, eff] = q.k.split(':'), list = live.filter(i => i.impact === imp && i.effort === eff), shown = list.filter(matches);
+      return colHTML('q:' + q.k, q.c, `${q.icon} ${q.name}`, list.length, q.hint + hiddenNote(list.length, shown.length), shown.map(i => cardHTML(i)).join(''), 'Drag a card here');
+    }).join('');
 }
 
 function render() {
   const board = $('#board');
-  const scroll = Object.fromEntries($$('.list', board).map(l => [l.dataset.stage, l.scrollTop]));
+  const scroll = Object.fromEntries($$('.list', board).map(l => [l.dataset.drop, l.scrollTop]));
   const left = board.scrollLeft;
   board.classList.toggle('selecting', S.selecting);
-  board.innerHTML = STAGES.map(s => {
-    const list = ideas().filter(i => i.status === s.k).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-    const shown = list.filter(matches);
-    const hidden = list.length - shown.length;
-    return `<section class="col" data-stage="${s.k}" style="--c:var(--${s.k})">
-      <div class="col-h"><span class="dot"></span><h2>${s.icon} ${s.name}</h2><span class="count" title="${list.length} in ${s.name}">${list.length}</span></div>
-      <div class="col-sub">${s.hint}${hidden ? ` · ${hidden} hidden by filters` : ''}</div>
-      <div class="list" data-stage="${s.k}">
-        ${shown.map(cardHTML).join('') || `<div class="empty">${list.length ? 'No matches' : (s.k === 'inbox' ? 'Your forge is cold 🔥<br>Drop a thought above' : 'Drag a card here')}</div>`}
-      </div>
-    </section>`;
-  }).join('');
-  $$('.list', board).forEach(l => { l.scrollTop = scroll[l.dataset.stage] || 0; });
+  board.classList.toggle('mx', S.tab === 'matrix');
+  board.innerHTML = S.tab === 'challenges' ? renderChallenges() : S.tab === 'matrix' ? renderMatrix() : S.view === 'groups' ? renderGroups() : renderStages();
+  $$('.list', board).forEach(l => { l.scrollTop = scroll[l.dataset.drop] || 0; });
   board.scrollLeft = left;
   setTimeout(() => flashIds.clear(), 50);
   renderStats();
+  renderTabs();
   renderSelbar();
   if (S.open && !$('#drawer').contains(document.activeElement)) renderDrawer();
+  if ($('#trayPop').classList.contains('on')) renderTray();
 }
 
 function renderStats() {
   const c = k => ideas().filter(i => i.status === k).length;
-  const pending = ideas().filter(isPending).length;
+  const pending = ideas().filter(isPending).length, open = chs().filter(x => x.status === 'open').length;
   $('#stats').innerHTML = [
     `<span class="stat"><b>${pending}</b>&nbsp;pending</span>`,
     ...STAGES.filter(s => c(s.k)).map(s => `<span class="stat"><i style="background:var(--${s.k})"></i>${c(s.k)} ${s.name.toLowerCase()}</span>`),
+    open ? `<span class="stat"><i style="background:var(--ch-open)"></i>${open} challenge${open > 1 ? 's' : ''}</span>` : '',
   ].join('');
-  $('#binBtn').title = `Removed ideas (${c('removed')})`;
+  const gone = c('removed') + chs().filter(x => x.status === 'dismissed').length;
+  $('#binBtn').title = `Removed (${gone})`;
+}
+
+function setTab(t) {
+  if (!['ideas', 'challenges', 'matrix'].includes(t)) return;
+  S.tab = t; localStorage.tab = t;
+  if (t !== 'ideas') { S.selecting = false; S.picked.clear(); }
+  renderFilters(); render();
+}
+function renderTabs() {
+  const pend = ideas().filter(isPending).length, open = chs().filter(c => c.status === 'open').length;
+  const tabs = [['ideas', '💡 Ideas', pend], ['challenges', '🧗 Challenges', open], ['matrix', '▦ Matrix', '']];
+  $('#tabs').innerHTML = tabs.map(([k, l, n], x) => `<button type="button" data-tab="${k}" class="${S.tab === k ? 'on' : ''}" title="Press ${x + 1}">${l}${n !== '' ? `<span class="n">${n}</span>` : ''}</button>`).join('');
+  $('#viewSeg').hidden = S.tab !== 'ideas';
+  $('#viewSeg').innerHTML = [['stages', '▥ Stages'], ['groups', '▤ Groups']].map(([k, l]) => `<button type="button" data-view="${k}" class="${S.view === k ? 'on' : ''}">${l}</button>`).join('');
+  const t = tray(), n = t.ideas.length + t.chs.length;
+  $('#trayBtn').hidden = !n; $('#trayN').textContent = n;
+  const cap = $('#capBtn');
+  cap.hidden = !pageOn();
+  cap.classList.toggle('busy', S.capturing); cap.disabled = S.capturing;
+  cap.textContent = S.capturing ? '📎 Reading…' : '📎 Capture page';
+  cap.title = `Reads the page in your browser${S.ed.tools ? ` (and ${S.ed.tools})` : ''} and suggests challenges and ideas from it${S.hotkeys ? ` · ${keys()}I` : ''}`;
+  const f = $('#findBtn');
+  f.classList.toggle('busy', S.finding); f.disabled = S.finding;
+  f.textContent = S.finding ? '🔍 Looking…' : '🔍 Find challenges';
+  f.title = `${word()} looks for problems that keep coming back` + (pageOn() && S.ed.tools ? ` — in your apps and ${S.ed.tools}` : ' — in your apps\' TODOs and open issues')
+    + (S.settings.lastFind ? ` · last looked ${ago(S.settings.lastFind)}` : '');
+  $('#selBtn').hidden = S.tab !== 'ideas';
+  const nb = $('#nextBtn'); nb.disabled = !aiOK() && !S.demo; nb.title = aiOK() ? `${word()} looks at the whole board and picks what to build next` : (S.ai.problem || 'Set up an AI in Settings');
+  const ab = $('#aiBanner');
+  ab.hidden = S.demo || aiOK();
+  ab.textContent = `⚠︎ ${S.ai.problem || 'No AI set up yet'} — cards still work; click to open Settings.`;
 }
 
 function renderFilters() {
   const opt = (v, label, cur) => `<option value="${esc(v)}" ${v === cur ? 'selected' : ''}>${esc(label)}</option>`;
   $('#fType').innerHTML = opt('all', 'All types', S.fType) + Object.entries(TYPES).map(([k, t]) => opt(k, `${t.icon} ${t.name}`, S.fType)).join('') + opt('none', 'Unshaped', S.fType);
   $('#fHome').innerHTML = opt('all', 'Anywhere', S.fHome) + Object.entries(HOMES).map(([k, h]) => opt(k, `${h.icon} ${h.name}`, S.fHome)).join('') + opt('none', '🤔 Undecided', S.fHome);
-  const used = [...new Set(ideas().filter(i => i.status !== 'removed').map(i => i.app).filter(Boolean))].sort();
-  if (S.fApp && !used.includes(S.fApp)) used.push(S.fApp);
-  $('#fApp').innerHTML = opt('', 'All apps', S.fApp) + used.map(a => opt(a, a, S.fApp)).join('');
-  for (const [id, on] of [['fType', S.fType !== 'all'], ['fHome', S.fHome !== 'all'], ['fApp', !!S.fApp]]) $('#' + id).classList.toggle('on', on);
+  const used = groups();
+  if (S.fGroup && !used.includes(S.fGroup)) used.push(S.fGroup);
+  $('#fGroup').innerHTML = opt('', 'All groups', S.fGroup) + used.map(a => opt(a, '▤ ' + a, S.fGroup)).join('');
+  $('#fOrigin').innerHTML = opt('all', 'Added by anyone', S.fOrigin) + Object.entries(ORIGINS).map(([k, o]) => opt(k, `${o.icon} ${o.name}`, S.fOrigin)).join('');
+  const ideaTab = S.tab !== 'challenges';
+  for (const id of ['fType', 'fHome', 'fGroup']) $('#' + id).hidden = !ideaTab;
+  for (const [id, on] of [['fType', S.fType !== 'all'], ['fHome', S.fHome !== 'all'], ['fGroup', !!S.fGroup], ['fOrigin', S.fOrigin !== 'all']]) $('#' + id).classList.toggle('on', on);
+  $('#q').placeholder = S.tab === 'challenges' ? 'Search challenges' : 'Search ideas';
+  const th = $('#thought');
+  th.placeholder = S.tab === 'challenges'
+    ? `What slows you down or keeps going wrong? ${word()} turns it into a challenge and sparks ideas.`
+    : `Dump a thought — messy is fine. Several ideas at once? ${word()} splits them into cards.` + (S.fGroup ? ` (files into ▤ ${S.fGroup})` : '');
   const sw = $('#autoShape');
-  sw.checked = S.claude && S.settings.autoShape !== false;
-  sw.disabled = !S.claude;
-  $('#shapeSw').title = S.claude ? 'Claude turns the thought into a clear card' : 'Claude CLI not found — install Claude Code to shape ideas';
+  sw.checked = aiOK() && S.settings.autoShape !== false;
+  sw.disabled = !aiOK();
+  $('#shapeSw').title = aiOK() ? `${word()} turns it into a clear card` : (S.ai.problem || 'Set up an AI in Settings to shape cards');
 }
 
-function renderAll() { renderFilters(); render(); if ($('#setPop').classList.contains('on')) renderSettings(); if ($('#binPop').classList.contains('on')) renderBin(); if ($('#nextPop').classList.contains('on')) renderNext(); }
+function renderAll() {
+  renderFilters(); render();
+  // Don't redraw Settings under the cursor while a key or address is being typed.
+  if ($('#setPop').classList.contains('on') && !$('#setPop').contains(document.activeElement)) renderSettings();
+  if ($('#binPop').classList.contains('on')) renderBin();
+  if ($('#nextPop').classList.contains('on')) renderNext();
+}
 
-// ---------- Drawer ----------
+// ---------- Drawers ----------
 function openDrawer(id) {
-  S.open = id;
+  S.open = id; S.openKind = 'idea';
   renderDrawer();
   $('#drawer').classList.add('on'); $('#scrim').classList.add('on');
-  setTimeout(() => { const t = $('.d-title'); if (t && !byId(id).title) t.focus(); }, 200);
+  setTimeout(() => { const t = $('.d-title'); const i = byId(id); if (t && i && !i.title) t.focus(); }, 200);
+}
+function openChallenge(id) {
+  S.open = id; S.openKind = 'challenge';
+  renderDrawer();
+  $('#drawer').classList.add('on'); $('#scrim').classList.add('on');
 }
 function closeDrawer() {
   S.open = null;
@@ -637,23 +1134,37 @@ function segHTML(name, opts, cur, extra = '') {
   return `<div class="seg ${extra}" data-seg="${name}">` + opts.map(([v, label, style]) =>
     `<button type="button" data-v="${esc(v)}" class="${v === cur ? 'on' : ''}" ${style ? `style="${style}"` : ''}>${label}</button>`).join('') + '</div>';
 }
+function originHTML(x) {
+  const o = x.origin || {}, by = originOf(x), url = safeUrl(o.url);
+  return `<div class="field"><span class="lbl">Added by</span>
+    ${segHTML('origin', Object.entries(ORIGINS).map(([k, v]) => [k, `${v.icon} ${v.name.replace('From a page', 'Page')}`]), by)}
+    ${by === 'teammate' ? `<input type="text" data-of="name" value="${esc(o.name || '')}" placeholder="Who suggested it?" list="peopleList2" style="margin-top:6px">
+      <datalist id="peopleList2">${S.people.map(p => `<option value="${esc(p)}">`).join('')}</datalist>` : ''}
+    ${o.label || o.source || url ? `<div class="src">${[o.label, o.source].filter(Boolean).map(esc).join(' · ')}${url ? ` · <a href="${esc(url)}">Open source ↗</a>` : ''}</div>` : ''}</div>`;
+}
 
 function renderDrawer() {
+  if (S.openKind === 'challenge') return renderChDrawer();
   const i = byId(S.open);
   const d = $('#drawer');
   if (!i) { closeDrawer(); return; }
   const steps = i.steps || [];
   const done = steps.filter(s => s.done).length;
   const h = HOMES[i.home];
+  const app = S.apps.find(a => a.name.toLowerCase() === (i.app || '').toLowerCase());
+  const opts = chs().filter(c => ['open', 'solved'].includes(c.status) || c.id === i.challenge);
+  const gl = [...new Set([...groups(), ...S.apps.map(a => a.name)])];
   d.innerHTML = `
     <div class="d-head">
       <span class="ref">#${i.n ?? '–'}</span><span>Added ${fmtDate(i.created)}${i.updated && i.updated !== i.created ? ' · edited ' + fmtDate(i.updated) : ''}</span>
       <button class="btn icon" data-act="close" aria-label="Close" title="Close (Esc)">✕</button>
     </div>
     <div class="d-body">
+      ${i.status === 'suggested' ? `<div class="note" style="margin:0 0 12px">✨ Suggested by ${esc(word())} — keep it to add it to your board.
+        <div class="sug-act"><button class="btn primary" data-act="keep">Keep</button><button class="btn" data-act="dismiss">Dismiss</button></div></div>` : ''}
       <textarea class="d-title" rows="1" data-f="title" placeholder="Give it a name">${esc(i.title)}</textarea>
-      <div class="field"><span class="lbl">Stage</span>
-        ${segHTML('status', STAGES.map(s => [s.k, `${s.icon} ${s.name}`, `--c:var(--${s.k})`]), i.status, 'stage')}</div>
+      ${i.status !== 'suggested' ? `<div class="field"><span class="lbl">Stage</span>
+        ${segHTML('status', STAGES.map(s => [s.k, `${s.icon} ${s.name}`, `--c:var(--${s.k})`]), i.status, 'stage')}</div>` : ''}
       <div class="row2">
         <div class="field"><span class="lbl">Type</span>${segHTML('type', Object.entries(TYPES).map(([k, t]) => [k, `${t.icon} ${t.name.replace('New agent', 'Agent').replace('Enhancement', 'Enhance')}`]), i.type)}</div>
         <div class="field"><span class="lbl">Priority</span>${segHTML('priority', Object.entries(PRIO).map(([k, p]) => [k, `${p.icon} ${p.name}`]), i.priority)}</div>
@@ -661,11 +1172,24 @@ function renderDrawer() {
       <div class="field"><span class="lbl">Where it ships</span>
         ${segHTML('home', Object.entries(HOMES).map(([k, x]) => [k, `${x.icon} ${x.name}`]), i.home)}
         <div class="home-hint">${h ? h.hint : '🤔 Not decided yet. Pick Personal if anyone could use it, Work if it touches work data or colleagues.'}</div></div>
-      <div class="field"><label for="dApp">For app <span style="text-transform:none;letter-spacing:0;font-weight:400">(empty = a brand-new agent)</span></label>
-        <input type="text" id="dApp" data-f="app" list="appList" value="${esc(i.app)}" placeholder="Pick one of your apps or type a name">
-        <datalist id="appList">${S.apps.map(a => `<option value="${esc(a.name)}">${a.home ? HOMES[a.home]?.name || '' : ''}</option>`).join('')}</datalist></div>
+      <div class="row2">
+        <div class="field"><label for="dApp">For app <span style="text-transform:none;letter-spacing:0;font-weight:400">(empty = new agent)</span></label>
+          <input type="text" id="dApp" data-f="app" list="appList" value="${esc(i.app)}" placeholder="One of your apps">
+          <datalist id="appList">${S.apps.map(a => `<option value="${esc(a.name)}">${a.home ? HOMES[a.home]?.name || '' : ''}</option>`).join('')}</datalist></div>
+        <div class="field"><label for="dGroup">▤ Group <span style="text-transform:none;letter-spacing:0;font-weight:400">(agent or app)</span></label>
+          <input type="text" id="dGroup" data-f="group" list="groupList" value="${esc(i.group || '')}" placeholder="${esc(i.app || 'e.g. Standup Bot')}">
+          <datalist id="groupList">${gl.map(g => `<option value="${esc(g)}">`).join('')}</datalist></div>
+      </div>
       <div class="field"><label>What it does</label><textarea rows="3" data-f="summary" placeholder="One or two sentences anyone can understand">${esc(i.summary)}</textarea></div>
       <div class="field"><label>Why it matters</label><textarea rows="2" data-f="why" placeholder="The value — who it helps and how">${esc(i.why)}</textarea></div>
+      <div class="field"><label for="dChal">🧗 Solves challenge</label>
+        <select class="pill" id="dChal" data-chal>${`<option value="">— none —</option>` + opts.map(c => `<option value="${esc(c.id)}" ${c.id === i.challenge ? 'selected' : ''}>${c.n ? 'C#' + c.n : 'Suggested'} ${esc(clip(cname(c), 60))}</option>`).join('')}</select>
+        ${i.challenge && chById(i.challenge) ? `<div class="src"><a href="#" data-gochal="${esc(i.challenge)}">Open the challenge →</a> · shipping this marks it solved</div>` : ''}</div>
+      <div class="row2">
+        <div class="field"><span class="lbl">Impact</span>${segHTML('impact', [['high', '⬆︎ High'], ['low', '⬇︎ Low']], i.impact || '')}</div>
+        <div class="field"><span class="lbl">Effort</span>${segHTML('effort', [['low', '🪶 Low'], ['high', '🏋️ High']], i.effort || '')}</div>
+      </div>
+      ${i.placeWhy ? `<div class="src" style="margin-top:-4px">${esc(i.placeWhy)}</div>` : ''}
       <div class="field"><span class="lbl">Build steps ${steps.length ? `· ${done}/${steps.length} done` : ''}</span>
         <div class="steps">${steps.map((s, k) => `<div class="step ${s.done ? 'done' : ''}"><input type="checkbox" data-step="${k}" ${s.done ? 'checked' : ''} aria-label="Done">
           <input type="text" data-steptext="${k}" value="${esc(s.t)}"><button class="x" data-stepdel="${k}" title="Remove step" aria-label="Remove step">✕</button></div>`).join('')}
@@ -673,21 +1197,72 @@ function renderDrawer() {
         </div></div>
       ${(i.similar || []).length ? `<div class="field"><span class="lbl">🔁 Looks like</span>${i.similar.map(n => { const x = ideas().find(y => y.n === n);
           return x ? `<span class="chip sim" data-goto="${n}" style="margin-right:6px">#${n} ${esc(clip(nameOf(x), 48))}</span>` : ''; }).join('')}</div>` : ''}
-      ${S.ed.claudeTools ? askHTML(i) : ''}
+      ${askHTML(i)}
       <div class="field"><span class="lbl">🤝 Who can help</span>${tokensHTML('helpers', i.helpers, 'Add a name and press Return')}</div>
       <div class="field"><span class="lbl">Tags</span>${tokensHTML('tags', i.tags, 'Add a tag')}</div>
+      ${originHTML(i)}
       <div class="field"><details class="raw" ${i.raw && !i.summary ? 'open' : ''}><summary>Original thought</summary>
         <textarea rows="4" data-f="raw" placeholder="Your words, as you first wrote them">${esc(i.raw)}</textarea></details></div>
       ${i.shapeError ? `<div class="err">⚠︎ ${esc(i.shapeError)}</div>` : ''}
     </div>
     <div class="d-foot">
-      <button class="btn primary" data-act="reshape" ${S.claude ? '' : 'disabled title="Claude CLI not found"'}>${S.shaping.has(i.id) ? '✨ Shaping…' : (i.shapedAt ? '✨ Re-shape' : '✨ Shape with Claude')}</button>
-      ${S.ed.claudeTools ? `<button class="btn" data-act="build" ${S.claude ? '' : 'disabled'} title="Opens Claude Code in Terminal${i.app ? ' in ' + esc(i.app) + "'s folder" : ''}, with this card as the brief">🚀 Build in Claude Code</button>` : ''}
+      <button class="btn primary" data-act="reshape" ${aiOK() ? '' : `disabled title="${esc(S.ai.problem || 'Set up an AI in Settings')}"`}>${S.shaping.has(i.id) ? '✨ Shaping…' : (i.shapedAt ? '✨ Re-shape' : '✨ Shape')}</button>
+      ${S.ai.claude ? `<button class="btn" data-act="build" data-tool="claude" title="Opens Claude Code in Terminal${i.app ? ' in ' + esc(i.app) + "'s folder" : ''}, with this card as the brief">🚀 Claude Code</button>` : ''}
+      ${S.ai.codex ? `<button class="btn" data-act="build" data-tool="codex" title="Opens Codex in Terminal${i.app ? ' in ' + esc(i.app) + "'s folder" : ''}, with this card as the brief">🚀 Codex</button>` : ''}
       <button class="btn" data-act="brief" title="Copy a Markdown brief to share with someone who can help">📋 Copy brief</button>
+      ${app && safeUrl(app.repo) ? `<button class="btn" data-act="issue" title="Open a new issue on ${esc(app.name)}'s repo, filled with this card">🐙 Open as issue</button>` : ''}
       <span class="grow"></span>
       <button class="btn danger" data-act="remove">🗑 Remove</button>
     </div>`;
   const ta = $('.d-title', d); autosize(ta);
+}
+
+function renderChDrawer() {
+  const c = chById(S.open);
+  const d = $('#drawer');
+  if (!c) { closeDrawer(); return; }
+  const linked = linkedIdeas(c), sug = ideas().filter(i => i.challenge === c.id && i.status === 'suggested');
+  d.innerHTML = `
+    <div class="d-head">
+      <span class="ref">C#${c.n ?? '–'}</span><span>🧗 Challenge · added ${fmtDate(c.created)}${c.lastHit ? ' · last hit ' + fmtDate(c.lastHit) : ''}</span>
+      <button class="btn icon" data-act="close" aria-label="Close" title="Close (Esc)">✕</button>
+    </div>
+    <div class="d-body">
+      ${c.status === 'suggested' ? `<div class="note" style="margin:0 0 12px">✨ Suggested by ${esc(word())} — keep it to add it to your challenges.
+        <div class="sug-act"><button class="btn primary" data-act="keep">Keep</button><button class="btn" data-act="dismiss">Dismiss</button></div></div>` : ''}
+      <textarea class="d-title" rows="1" data-cf="title" placeholder="What's the problem?">${esc(c.title)}</textarea>
+      ${c.status !== 'suggested' ? `<div class="field"><span class="lbl">Status</span>${segHTML('cstatus', [['open', '🧗 Open'], ['solved', '✅ Solved']], c.status)}</div>` : ''}
+      <div class="row2">
+        <div class="field"><span class="lbl">Impact</span>${segHTML('cimpact', [['high', '🔥 High'], ['med', '⚡ Med'], ['low', '🌱 Low']], c.impact)}</div>
+        <div class="field"><span class="lbl">Hit it</span><div class="inline-in" style="margin:0">
+          <button class="btn sm" data-act="hitminus" ${(c.hits || 1) > 1 ? '' : 'disabled'} aria-label="One fewer">−</button>
+          <b style="min-width:34px;text-align:center">×${c.hits || 1}</b>
+          <button class="btn sm" data-act="hit" aria-label="Hit again">＋1</button></div></div>
+      </div>
+      <div class="field"><span class="lbl">How often</span>${segHTML('coften', Object.entries(OFTEN), c.often)}</div>
+      <div class="field"><label>What happens</label><textarea rows="3" data-cf="detail" placeholder="What goes wrong, and what it costs you">${esc(c.detail)}</textarea></div>
+      <div class="field"><label>Where</label><input type="text" data-cf="where" value="${esc(c.where)}" placeholder="The app, tool or task where it happens"></div>
+      ${originHTML(c)}
+      <div class="field"><span class="lbl">💡 Ideas for it (${linked.length})</span>
+        ${linked.map(i => `<div class="linked" data-open="${esc(i.id)}"><span class="ref">#${i.n}</span><span class="t">${esc(nameOf(i))}</span>
+          <span class="chip stg" style="--c:var(--${i.status})">${stageOf(i.status)?.icon || ''} ${stageOf(i.status)?.name || ''}</span></div>`).join('') || '<div class="hint">No ideas yet.</div>'}
+        ${sug.map(i => `<div class="linked" data-peek="${esc(i.id)}"><span class="chip o-ai">✨</span><span class="t">${esc(nameOf(i))}</span>
+          <button class="btn primary" data-keep="${esc(i.id)}">Keep</button><button class="btn" data-dismiss="${esc(i.id)}">✕</button></div>`).join('')}
+        <div class="sug-act">
+          <button class="btn" data-act="spark" ${aiOK() && !S.sparking.has(c.id) ? '' : 'disabled'}>${S.sparking.has(c.id) ? '✨ Sparking…' : '✨ Spark ideas'}</button>
+          <button class="btn" data-act="ownidea">＋ Write my own</button></div>
+        ${c.sparkError ? `<div class="err">⚠︎ ${esc(c.sparkError)}</div>` : ''}</div>
+      <div class="field"><details class="raw" ${c.raw && !c.detail ? 'open' : ''}><summary>Original note</summary>
+        <textarea rows="4" data-cf="raw" placeholder="Your words, as you first wrote them">${esc(c.raw)}</textarea></details></div>
+      ${c.shapeError ? `<div class="err">⚠︎ ${esc(c.shapeError)}</div>` : ''}
+    </div>
+    <div class="d-foot">
+      <button class="btn primary" data-act="chreshape" ${aiOK() ? '' : 'disabled'}>${S.chShaping.has(c.id) ? '✨ Shaping…' : (c.shapedAt ? '✨ Re-shape' : '✨ Shape')}</button>
+      <button class="btn" data-act="chcopy" title="Copy the challenge as Markdown">📋 Copy</button>
+      <span class="grow"></span>
+      <button class="btn danger" data-act="chremove">🗑 Remove</button>
+    </div>`;
+  autosize($('.d-title', d));
 }
 
 function tokensHTML(field, list, ph) {
@@ -707,18 +1282,28 @@ function setStatus(i, status) {
   i.order = status === 'shipped' || status === 'inbox' ? (col.length ? Math.min(...col.map(x => x.order ?? 0)) - 1 : 0)
                                                        : (col.length ? Math.max(...col.map(x => x.order ?? 0)) + 1 : 0);
   touch(i);
+  // Shipping the idea for a challenge solves it.
+  const c = status === 'shipped' && i.challenge && chById(i.challenge);
+  if (c && c.status === 'open') { c.status = 'solved'; c.solvedAt = now(); touch(c); setTimeout(() => toast(`✅ C#${c.n} solved by #${i.n}`), 2600); }
 }
 
 function brief(i) {
-  const t = TYPES[i.type], h = HOMES[i.home], p = PRIO[i.priority];
+  const t = TYPES[i.type], h = HOMES[i.home], p = PRIO[i.priority], c = i.challenge && chById(i.challenge);
   const lines = [`### ${t ? t.icon + ' ' : ''}${nameOf(i)}`, ''];
   if (i.summary) lines.push(i.summary, '');
   if (i.why) lines.push(`**Why:** ${i.why}`, '');
-  const meta = [t && t.name, i.app && `for ${i.app}`, h && `${h.icon} ${h.name}`, p && `${p.icon} ${p.name} priority`, stageOf(i.status)?.name].filter(Boolean);
+  if (c) lines.push(`**Solves:** ${cname(c)}${c.detail ? ' — ' + c.detail : ''} _(${OFTEN[c.often] || ''}, hit ${c.hits || 1}×)_`, '');
+  const g = groupOf(i);
+  const meta = [t && t.name, i.app && `for ${i.app}`, g && g !== i.app && `group ${g}`, h && `${h.icon} ${h.name}`, p && `${p.icon} ${p.name} priority`, stageOf(i.status)?.name].filter(Boolean);
   lines.push(`_${meta.join(' · ')}_`, '');
   if ((i.steps || []).length) { lines.push('**Steps**'); i.steps.forEach(s => lines.push(`- [${s.done ? 'x' : ' '}] ${s.t}`)); lines.push(''); }
   if ((i.helpers || []).length) lines.push(`**Who can help:** ${i.helpers.join(', ')}`);
   return lines.join('\n').trim();
+}
+function chText(c) {
+  return [`### 🧗 C#${c.n ?? '–'} ${cname(c)}`, '', c.detail, c.where && `**Where:** ${c.where}`,
+    `_${OFTEN[c.often] || ''} · ${c.impact} impact · hit ${c.hits || 1}× · ${c.status}_`,
+    ...linkedIdeas(c).map(i => `- [${i.status === 'shipped' ? 'x' : ' '}] #${i.n} ${nameOf(i)}`)].filter(x => x !== undefined && x !== '').join('\n');
 }
 
 function checklist() {
@@ -730,20 +1315,29 @@ function checklist() {
     if (!list.length) continue;
     out.push('', `### ${s.icon} ${s.name} (${list.length})`);
     for (const i of list) {
-      const tags = [TYPES[i.type] && `${TYPES[i.type].icon} ${TYPES[i.type].name}`, i.app, HOMES[i.home] && `${HOMES[i.home].icon} ${HOMES[i.home].name}`, PRIO[i.priority]?.icon].filter(Boolean);
+      const c = i.challenge && chById(i.challenge);
+      const tags = [TYPES[i.type] && `${TYPES[i.type].icon} ${TYPES[i.type].name}`, groupOf(i) && '▤ ' + groupOf(i), HOMES[i.home] && `${HOMES[i.home].icon} ${HOMES[i.home].name}`, PRIO[i.priority]?.icon, c && c.n && `🧗 C#${c.n}`].filter(Boolean);
       out.push(`- [ ] #${i.n} **${nameOf(i)}**${i.summary ? ' — ' + i.summary : ''} _(${tags.join(' · ') || 'unshaped'})_`);
     }
   }
+  const open = chs().filter(c => c.status === 'open').sort((a, b) => heat(b) - heat(a));
+  if (open.length) {
+    out.push('', `### 🧗 Open challenges (${open.length})`);
+    for (const c of open) out.push(`- [ ] C#${c.n} **${cname(c)}** _(${OFTEN[c.often] || ''} · ${c.impact} impact · ×${c.hits || 1})_`);
+  }
+  const t = tray(), n = t.ideas.length + t.chs.length;
+  if (n) out.push('', `_✨ ${n} suggestion${n > 1 ? 's' : ''} waiting to be kept or dismissed._`);
   return out.join('\n');
 }
 
 // ---------- Drag and drop (pointer-based, so it feels the same everywhere) ----------
+// Lists say what a drop means: s:<stage> (reorder/move), q:<impact>:<effort> or q:none (matrix), g:<n> (group).
 let drag = null;
 const board = $('#board');
 
 board.addEventListener('pointerdown', e => {
-  const card = e.target.closest('.card');
-  if (!card || e.button !== 0 || e.target.closest('button,input,label,a,textarea,[data-goto]')) return;
+  const card = e.target.closest('.card[data-id]');
+  if (!card || e.button !== 0 || e.target.closest('button,input,label,a,textarea,[data-goto],[data-gochal],[data-group]')) return;
   drag = {card, id:card.dataset.id, sx:e.clientX, sy:e.clientY, started:false};
 });
 
@@ -772,7 +1366,7 @@ function startDrag() {
   const r = drag.card.getBoundingClientRect();
   drag.started = true;
   drag.dx = drag.sx - r.left; drag.dy = drag.sy - r.top;
-  drag.from = drag.card.closest('.list').dataset.stage;
+  drag.from = drag.card.closest('.list').dataset.drop;
   const g = drag.card.cloneNode(true);
   g.classList.add('ghost'); g.classList.remove('flash');
   g.style.width = r.width + 'px';
@@ -793,14 +1387,14 @@ function moveDrag() {
   ghost.style.top = (drag.y - drag.dy) + 'px';
   const el = document.elementFromPoint(drag.x, drag.y);
   const col = el && el.closest('.col');
+  const list = col && $('.list[data-drop]', col);
   $$('.col.over').forEach(c => c !== col && c.classList.remove('over'));
-  if (!col) return;
+  if (!list) return;
   col.classList.add('over');
-  const list = $('.list', col);
   const cards = $$('.card', list).filter(c => c !== drag.card);
   const before = cards.find(c => { const r = c.getBoundingClientRect(); return drag.y < r.top + r.height / 2; });
   $('.empty', list)?.remove();
-  ph.style.setProperty('--c', `var(--${list.dataset.stage})`);
+  ph.style.setProperty('--c', col.style.getPropertyValue('--c'));
   if (before) { if (ph.nextSibling !== before) list.insertBefore(ph, before); }
   else if (list.lastElementChild !== ph) list.appendChild(ph);
 }
@@ -823,7 +1417,7 @@ function endDrag() {
   document.body.classList.remove('dragging');
   $$('.col.over').forEach(c => c.classList.remove('over'));
   const list = d.ph.parentElement;
-  const to = list.dataset.stage;
+  const to = list.dataset.drop || '';
   const i = byId(d.id);
   // New order = the visible order of the target column with the card at the placeholder.
   const ids = [...list.children].filter(el => el !== d.card).map(el => el === d.ph ? d.id : el.dataset && el.dataset.id).filter(Boolean);
@@ -832,17 +1426,30 @@ function endDrag() {
   d.ghost.style.left = gr.left + 'px'; d.ghost.style.top = gr.top + 'px'; d.ghost.style.transform = 'none';
   setTimeout(() => {
     d.ghost.remove();
-    if (i) {
-      if (i.status !== to) setStatus(i, to);
-      // Hidden (filtered) cards keep their place after the visible ones.
-      const hidden = ideas().filter(x => x.status === to && !ids.includes(x.id)).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-      [...ids.map(byId).filter(Boolean), ...hidden].forEach((x, k) => { x.order = k; });
-      touch(i);
-      save();
-      if (to === 'shipped' && d.from !== 'shipped') confetti(gr.left + gr.width / 2, gr.top + 20);
-    }
+    if (i && to !== d.from || i && to.startsWith('s:')) drop(i, to, ids, d, gr);
     if (S.deferred) { const s = S.deferred; S.deferred = null; forge.load(s); } else render();
   }, 170);
+}
+
+function drop(i, to, ids, d, gr) {
+  const [kind, a, b] = to.split(':');
+  if (kind === 's') {
+    if (i.status !== a) setStatus(i, a);
+    // Hidden (filtered) cards keep their place after the visible ones.
+    const hidden = ideas().filter(x => x.status === a && !ids.includes(x.id)).sort((x, y) => (x.order ?? 0) - (y.order ?? 0));
+    [...ids.map(byId).filter(Boolean), ...hidden].forEach((x, k) => { x.order = k; });
+    if (a === 'shipped' && d.from !== 's:shipped') confetti(gr.left + gr.width / 2, gr.top + 20);
+  } else if (kind === 'q') {
+    if (a === 'none') { delete i.impact; delete i.effort; delete i.placeWhy; }
+    else { i.impact = a; i.effort = b; delete i.placeWhy; }
+  } else if (kind === 'g') {
+    const g = groupKeys[+a] ?? '';
+    i.group = g;
+    if (!g && i.app) toast(`Still shown under ${i.app} — clear "For app" to ungroup it`);
+    else if (g) toast(`▤ Filed #${i.n} under ${g}`);
+  } else return;
+  touch(i);
+  save();
 }
 
 function confetti(x, y) {
@@ -880,127 +1487,274 @@ function bulk(status) {
   });
 }
 
-// ---------- Popovers ----------
+// ---------- Settings ----------
 function renderSettings() {
-  const st = S.settings;
+  const st = S.settings, ai = S.ai, p = (ai.providers || []).find(x => x.id === ai.provider) || {};
   // "Citadel's choice — Sonnet" is too long for a segment: show "Citadel · Sonnet", full label on hover.
   const short = l => l.replace(/^(\S+)'s choice — /, '$1 · ').replace(/^Default — /, 'Default · ');
   const segBtns = (key, opts, cur) => `<div class="seg" data-setting="${key}">` + opts.map(([v, l]) => `<button type="button" data-v="${v}" title="${esc(l)}" class="${v === cur ? 'on' : ''}">${esc(short(l))}</button>`).join('') + '</div>';
-  const sw = (key, label, on, dis) => `<label class="line"><span>${label}</span><span class="sw"><input type="checkbox" data-toggle="${key}" ${on ? 'checked' : ''} ${dis ? 'disabled' : ''}><b></b></span></label>`;
+  const sw = (key, label, on, dis, tip) => `<label class="line" ${tip ? `title="${esc(tip)}"` : ''}><span>${label}</span><span class="sw"><input type="checkbox" data-toggle="${key}" ${on ? 'checked' : ''} ${dis ? 'disabled' : ''}><b></b></span></label>`;
+  const models = [...(ai.models || [])];
+  if (ai.model && !models.some(m => m[0] === ai.model)) models.push([ai.model, ai.model]);
+  const help = safeUrl(p.help);
+  const upd = S.updates || {};
+  const tr = S.testResult;
   $('#setPop').innerHTML = `<h4>⚙️ Settings</h4>
+    <div class="grp">AI</div>
+    ${(ai.providers || []).length > 1 ? `<div class="inrow"><span class="lbl2">Provider</span><select class="pill" data-ai="provider">${ai.providers.map(x =>
+        `<option value="${esc(x.id)}" ${x.id === ai.provider ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select></div>` : ''}
+    <div class="ai-status ${ai.ready ? 'ok' : 'bad'}">${ai.ready ? `✓ ${esc(p.name || word())} is ready` : `⚠︎ ${esc(ai.problem || 'Not set up')}`}</div>
+    ${p.key && p.key !== 'none' ? `<div class="inrow"><span class="lbl2">API key</span>
+        <input class="fin" type="password" id="aiKey" placeholder="${p.hasKey ? '•••••••• saved in Keychain' : (p.key === 'optional' ? 'Optional' : 'Paste your key')}" autocomplete="off">
+        <button class="btn sm" data-aikey>Save</button>${p.hasKey ? `<button class="btn sm" data-aikeyclear title="Forget the key">✕</button>` : ''}</div>
+      ${help ? `<div class="hint" style="margin-top:4px">Kept in your Mac's Keychain, sent only to ${esc(p.name)}. <a href="${esc(help)}">Get a key ↗</a></div>` : ''}`
+      : (help && !ai.ready ? `<div class="hint"><a href="${esc(help)}">Install ${esc(p.name || '')} ↗</a></div>` : '')}
+    ${p.base ? `<div class="inrow"><span class="lbl2">Server</span><input class="fin" type="text" id="aiBase" value="${esc(p.base)}" spellcheck="false"><button class="btn sm" data-aibase>Save</button></div>` : ''}
+    <div class="inrow"><span class="lbl2">Model</span>
+      <select class="pill" data-ai="model">${models.map(([v, l]) => `<option value="${esc(v)}" ${v === ai.model ? 'selected' : ''}>${esc(l)}</option>`).join('')}
+        ${ai.provider !== 'claude-code' ? '<option value="__other">Other…</option>' : ''}</select>
+      ${ai.provider !== 'claude-code' ? `<button class="btn sm ${ai.loading ? 'busy' : ''}" data-airefresh title="Fetch the latest models" ${ai.loading ? 'disabled' : ''}>↻</button>` : ''}</div>
+    <div class="inrow" id="otherModel" hidden><span class="lbl2"></span><input class="fin" type="text" id="aiModel" placeholder="Model id, e.g. gpt-5" spellcheck="false"><button class="btn sm" data-aimodel>Use</button></div>
+    ${ai.provider !== 'claude-code' ? `<div class="hint" style="margin-top:4px">${ai.loading ? 'Loading models…' : ai.modelsErr ? '⚠︎ ' + esc(ai.modelsErr) : ai.modelsAt ? 'Model list updated ' + esc(ago(ai.modelsAt)) + ' · refreshes daily when online' : 'The newest models load when you\'re online.'}</div>` : ''}
+    <div class="inrow" style="margin-top:8px"><button class="btn sm ${S.testing ? 'busy' : ''}" data-aitest ${S.testing ? 'disabled' : ''}>${S.testing ? '⚡ Testing…' : '⚡ Test connection'}</button>
+      ${tr ? `<span class="${tr.ok ? 'good' : 'bad'}" style="font-size:12px">${tr.ok ? '✓' : '⚠︎'} ${esc(tr.text)}</span>` : ''}</div>
+    <div class="hint" style="margin-top:6px">🚀 Build: ${[ai.claude && 'Claude Code', ai.codex && 'Codex'].filter(Boolean).join(' and ') || 'install Claude Code or Codex to open a card in Terminal'}${ai.claude || ai.codex ? ' found' : ''}.</div>
+    ${S.ed.pageReading ? `<div class="grp">Reading pages</div>
+      ${sw('pageReading', `📎 Read pages${S.ed.tools ? ' &amp; ' + esc(S.ed.tools) : ''}`, !!st.pageReading)}
+      <div class="hint" style="margin:2px 0 4px">Off by default. When on: 📎 Capture page (and ${esc(keys())}I) reads the tab in your browser${S.ed.tools ? `, and ${esc(word())} may read ${esc(S.ed.tools)} — read-only —` : ''} to suggest challenges and ideas; 🔍 Find also looks there. Only when you ask. Just a short summary and the link are kept, never the page text.</div>` : ''}
+    <div class="grp">Automation</div>
+    ${sw('autoShape', 'Shape new thoughts automatically', ai.ready && st.autoShape !== false, !ai.ready)}
+    ${sw('autoSpark', 'Spark ideas for new challenges', ai.ready && st.autoSpark !== false, !ai.ready, 'Suggestions wait in ✨ Suggested until you keep them')}
+    ${sw('autoFind', '🔍 Find challenges once a day', !!st.autoFind, !ai.ready)}
+    ${sw('digest', 'Weekly digest notification', st.digest !== false)}
+    <div class="grp">Shortcuts</div>
+    ${sw('hotkeys', `Quick capture ${esc(keys())}N${pageOn() ? ` · capture page ${esc(keys())}I` : ''}`, st.hotkeys !== false)}
+    ${sw('hotkeyShift', 'Use ⌃⌥⇧ instead of ⌃⌥', !!st.hotkeyShift, st.hotkeys === false, 'For when another app already uses the ⌃⌥ keys')}
+    ${st.hotkeys !== false && !S.hotkeys && !S.demo ? '<div class="hint bad">⚠︎ Another app has these keys — try ⌃⌥⇧.</div>' : ''}
+    <div class="grp">People</div>
+    <div class="tokens" data-people>${(st.people || []).map((t, k) => `<span class="tok">${esc(t)}<button data-pdel="${k}" aria-label="Remove">✕</button></span>`).join('')}
+      <input type="text" data-pin placeholder="Add a name for Who can help"></div>
     <div class="grp">Appearance</div>${segBtns('appearance', S.ed.appearances, st.appearance || S.ed.appearances[0][0])}
-    <div class="grp">Shaping with Claude</div>
-    ${S.claude ? '' : '<div class="hint" style="margin-bottom:6px">Claude CLI not found. Install Claude Code to shape ideas; cards still work without it.</div>'}
-    ${sw('autoShape', 'Shape new thoughts automatically', S.claude && st.autoShape !== false, !S.claude)}
-    <div class="line"><span>Model</span></div>${segBtns('model', S.ed.models, st.model || S.ed.models[0][0])}
-    ${S.ed.claudeTools ? '<div class="hint" style="margin-top:6px">Used for shaping, 💬 Ask Claude and 🎯 What next.</div>' : ''}
     <div class="grp">Menu bar</div>
     ${sw('showCount', 'Show pending count next to ' + S.ed.symbol, st.showCount !== false)}
     ${sw('login', 'Launch at login', !!st.login)}
     <div class="grp">Your ideas file</div>
     <div class="path">${esc(S.file)}</div>
-    <div class="hint" style="margin:4px 0 8px">Only on this Mac. Edits made to it elsewhere show up here live.</div>
-    <button class="btn" data-reveal>Show in Finder</button>
+    <div class="hint" style="margin:4px 0 8px">${S.customFolder ? 'In the folder you picked.' : 'Only on this Mac.'} Edits made to it elsewhere show up here live.</div>
+    <button class="btn sm" data-reveal>Show in Finder</button>
+    ${S.ed.dataFolder ? `<button class="btn sm" data-folder>Choose folder…</button>${S.customFolder ? '<button class="btn sm" data-folderreset>Back to default</button>' : ''}` : ''}
+    ${upd.enabled ? `<div class="grp">Updates</div>
+      <div class="hint">${upd.latest ? `⬆️ ${esc(upd.latest)} is out` : upd.error ? '⚠︎ ' + esc(upd.error) : '✓ Up to date'}${upd.checkedAt ? ' · checked ' + esc(ago(upd.checkedAt)) : ''}</div>
+      <div class="inrow"><button class="btn sm" data-update>Check now</button>${upd.latest && safeUrl(upd.url) ? `<a class="btn sm primary" href="${esc(safeUrl(upd.url))}">Download</a>` : ''}</div>` : ''}
     <div class="grp">About</div>
-    <div class="hint">${esc(S.ed.name)} ${esc(S.version)} · <a href="${esc(S.ed.repo)}" style="color:var(--accent-ink)">${esc(S.ed.repoLabel)}</a></div>`;
+    <div class="hint">${esc(S.ed.name)} ${esc(S.version)} · <a href="${esc(safeUrl(S.ed.repo))}" style="color:var(--accent-ink)">${esc(S.ed.repoLabel)}</a></div>`;
 }
 
 function renderBin() {
   const gone = ideas().filter(i => i.status === 'removed').sort((a, b) => (b.removedAt || '').localeCompare(a.removedAt || ''));
-  $('#binPop').innerHTML = `<h4>🗑 Removed (${gone.length})</h4>` + (gone.length ? gone.map(i => `<div class="removed-item">
+  const gc = chs().filter(c => c.status === 'dismissed').sort((a, b) => (b.removedAt || '').localeCompare(a.removedAt || ''));
+  $('#binPop').innerHTML = `<h4>🗑 Removed (${gone.length + gc.length})</h4>` + (gone.length + gc.length ? gone.map(i => `<div class="removed-item">
       <span class="ref">#${i.n}</span><span class="t" title="${esc(nameOf(i))}">${esc(nameOf(i))}</span>
       <button class="btn" data-restore="${esc(i.id)}">Restore</button><button class="btn danger" data-purge="${esc(i.id)}" title="Delete forever">✕</button></div>`).join('')
+    + gc.map(c => `<div class="removed-item">
+      <span class="ref">C#${c.n}</span><span class="t" title="${esc(cname(c))}">🧗 ${esc(cname(c))}</span>
+      <button class="btn" data-restore="${esc(c.id)}">Restore</button><button class="btn danger" data-purge="${esc(c.id)}" title="Delete forever">✕</button></div>`).join('')
     + `<div style="margin-top:10px"><button class="btn danger" data-purgeall>Empty bin</button></div>`
-    : '<div class="hint">Nothing removed. Removed ideas wait here so you can bring them back.</div>');
+    : '<div class="hint">Nothing removed. Removed ideas and challenges wait here so you can bring them back.</div>');
 }
 
 function togglePop(id) {
   const p = $('#' + id), on = !p.classList.contains('on');
   $$('.pop').forEach(x => x.classList.remove('on'));
-  if (on) { id === 'setPop' ? renderSettings() : id === 'binPop' ? renderBin() : renderNext(); p.classList.add('on'); }
+  if (on) { ({setPop:renderSettings, binPop:renderBin, nextPop:renderNext, trayPop:renderTray})[id](); p.classList.add('on'); }
 }
 
 // ---------- Toast ----------
 let toastTimer;
-function toast(text, undo) {
+function toast(text, fn, label = 'Undo') {
   const t = $('#toast');
-  t.innerHTML = `<span>${esc(text)}</span>` + (undo ? '<button>Undo</button>' : '');
-  if (undo) $('button', t).onclick = () => { undo(); t.classList.remove('on'); };
+  t.replaceChildren(Object.assign(document.createElement('span'), {textContent:text}));
+  if (fn) { const b = Object.assign(document.createElement('button'), {textContent:label}); b.onclick = () => { fn(); t.classList.remove('on'); }; t.append(b); }
   t.classList.add('on');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('on'), undo ? 6000 : 2400);
+  toastTimer = setTimeout(() => t.classList.remove('on'), fn ? 6000 : 2400);
 }
 
 // ---------- Events ----------
-function autosize(ta) { ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight, 220) + 'px'; }
+function autosize(ta) { if (!ta) return; ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight, 220) + 'px'; }
 
 const thought = $('#thought');
 thought.addEventListener('input', () => autosize(thought));
 thought.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); addThought(thought.value); thought.value = ''; autosize(thought); }
+  if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); submitCapture(); }
 });
-$('#addBtn').onclick = () => { addThought(thought.value); thought.value = ''; autosize(thought); thought.focus(); };
+$('#addBtn').onclick = () => { submitCapture(); thought.focus(); };
 $('#autoShape').onchange = e => { S.settings.autoShape = e.target.checked; post({cmd:'setting', key:'autoShape', value:e.target.checked}); };
 
 $('#q').addEventListener('input', e => { S.q = e.target.value.trim(); render(); });
 $('#fType').onchange = e => { S.fType = e.target.value; renderAll(); };
 $('#fHome').onchange = e => { S.fHome = e.target.value; renderAll(); };
-$('#fApp').onchange = e => { S.fApp = e.target.value; renderAll(); };
+$('#fGroup').onchange = e => { S.fGroup = e.target.value; renderAll(); };
+$('#fOrigin').onchange = e => { S.fOrigin = e.target.value; renderAll(); };
 $('#selBtn').onclick = () => { S.selecting = !S.selecting; if (!S.selecting) S.picked.clear(); render(); };
 $('#selDone').onclick = () => { S.selecting = false; S.picked.clear(); render(); };
-$('#selAll').onclick = () => { $$('#board .card').forEach(c => S.picked.add(c.dataset.id)); render(); };
+$('#selAll').onclick = () => { $$('#board .card[data-id]').forEach(c => S.picked.add(c.dataset.id)); render(); };
 $$('#selbar [data-bulk]').forEach(b => b.onclick = () => bulk(b.dataset.bulk));
 $('#copyBtn').onclick = () => { post({cmd:'copy', text:checklist()}); toast(`📋 Copied ${ideas().filter(isPending).length} pending as a checklist`); };
 $('#setBtn').onclick = e => { e.stopPropagation(); togglePop('setPop'); };
 $('#binBtn').onclick = e => { e.stopPropagation(); togglePop('binPop'); };
+$('#trayBtn').onclick = e => { e.stopPropagation(); togglePop('trayPop'); };
+$('#capBtn').onclick = capturePage;
+$('#findBtn').onclick = findChallenges;
+$('#aiBanner').onclick = e => { e.stopPropagation(); forge.openSettings(); };
+$('#tabs').onclick = e => { const b = e.target.closest('[data-tab]'); if (b) setTab(b.dataset.tab); };
+$('#viewSeg').onclick = e => { const b = e.target.closest('[data-view]'); if (b) { S.view = b.dataset.view; localStorage.view = S.view; render(); } };
 $('#nextBtn').onclick = e => { e.stopPropagation(); $('#nextPop').classList.contains('on') ? togglePop('nextPop') : (S.doc.next && !S.nextErr ? togglePop('nextPop') : whatNext()); };
 $('#nextPop').addEventListener('click', e => {
   const r = e.target.closest('[data-open]'); if (r) { $('#nextPop').classList.remove('on'); openDrawer(r.dataset.open); }
   if (e.target.closest('[data-renext]')) { e.preventDefault(); whatNext(); }
 });
 function gotoIdea(n) { const x = ideas().find(i => i.n === n); if (x) { if (x.status === 'removed') toast(`#${n} is in the bin`); else openDrawer(x.id); } }
+function gotoChallenge(id) { const c = chById(id); if (!c) return; $$('.pop').forEach(p => p.classList.remove('on')); openChallenge(id); }
 $('#scrim').onclick = closeDrawer;
+
+function hitAgain(c) {
+  const was = {hits:c.hits || 1, lastHit:c.lastHit};
+  c.hits = was.hits + 1; c.lastHit = now(); touch(c); flashIds.add(c.id);
+  save(); render();
+  toast(`🧗 C#${c.n} hit ×${c.hits}`, () => { c.hits = was.hits; c.lastHit = was.lastHit; save(); render(); });
+}
 
 board.addEventListener('change', e => { if (e.target.dataset.pick) togglePick(e.target.dataset.pick); });
 board.addEventListener('click', e => {
   const r = e.target.closest('[data-retry]');
-  if (r) { const i = byId(r.dataset.retry); if (i) shape(i, !!i.shapedAt); }
+  if (r) { const i = byId(r.dataset.retry); if (i) shape(i, !!i.shapedAt); return; }
+  const cr = e.target.closest('[data-chretry]');
+  if (cr) { const c = chById(cr.dataset.chretry); if (c) shapeChallenge(c); return; }
   const g = e.target.closest('[data-goto]');
-  if (g) gotoIdea(+g.dataset.goto);
+  if (g) { gotoIdea(+g.dataset.goto); return; }
+  const gc = e.target.closest('[data-gochal]');
+  if (gc) { gotoChallenge(gc.dataset.gochal); return; }
+  const gp = e.target.closest('[data-group]');
+  if (gp) { S.fGroup = S.fGroup === gp.dataset.group ? '' : gp.dataset.group; renderAll(); return; }
+  const h = e.target.closest('[data-hit]');
+  if (h) { const c = chById(h.dataset.hit); if (c) hitAgain(c); return; }
+  const sp = e.target.closest('[data-spark]');
+  if (sp) { const c = chById(sp.dataset.spark); if (c) spark(c); return; }
+  const pl = e.target.closest('[data-place]');
+  if (pl) { placeAll(pl.dataset.place === 'all'); return; }
+  if (e.target.closest('[data-newgroup]')) {
+    const name = (prompt('Name the group — an agent you want to build, or one of your apps:') || '').trim();
+    if (!name) return;
+    S.newGroups = [...new Set([...(S.newGroups || []), name])];
+    S.view = 'groups'; render();
+    toast(`▤ ${name} — drag ideas onto it, or add one with the filter set to it`);
+    return;
+  }
+  const ch = e.target.closest('.card[data-chid]');
+  if (ch && !e.target.closest('button')) openChallenge(ch.dataset.chid);
 });
 board.addEventListener('keydown', e => {
   const c = e.target.closest('.card');
-  if (c && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); S.selecting ? togglePick(c.dataset.id) : openDrawer(c.dataset.id); }
+  if (!c || (e.key !== 'Enter' && e.key !== ' ')) return;
+  e.preventDefault();
+  if (c.dataset.chid) openChallenge(c.dataset.chid);
+  else S.selecting ? togglePick(c.dataset.id) : openDrawer(c.dataset.id);
 });
 
 document.addEventListener('click', e => {
-  if (!e.target.closest('.pop') && !e.target.closest('#setBtn,#binBtn,#nextBtn')) $$('.pop').forEach(p => p.classList.remove('on'));
+  if (!e.target.closest('.pop') && !e.target.closest('#setBtn,#binBtn,#nextBtn,#trayBtn,#aiBanner')) $$('.pop').forEach(p => p.classList.remove('on'));
+  // Links open in the browser (the app only opens http and https).
+  const a = e.target.closest('a[href]');
+  if (a && !a.matches('[href="#"]')) { e.preventDefault(); if (safeUrl(a.getAttribute('href'))) post({cmd:'open', url:a.getAttribute('href')}); }
 });
 
-// Settings + bin popovers
+// Tray
+$('#trayPop').addEventListener('click', e => {
+  const k = e.target.closest('[data-keep]'), d = e.target.closest('[data-dismiss]'), pk = e.target.closest('[data-peek]');
+  const gc = e.target.closest('[data-gochal]');
+  if (k) { const i = byId(k.dataset.keep), c = chById(k.dataset.keep); if (i) keepIdea(i); if (c) keepChallenge(c); save(); renderAll(); return; }
+  if (d) { const i = byId(d.dataset.dismiss), c = chById(d.dataset.dismiss); if (i) dismissIdea(i); if (c) dismissChallenge(c); save(); renderAll(); return; }
+  if (gc) { gotoChallenge(gc.dataset.gochal); return; }
+  if (pk) { $('#trayPop').classList.remove('on'); byId(pk.dataset.peek) ? openDrawer(pk.dataset.peek) : openChallenge(pk.dataset.peek); return; }
+  if (e.target.closest('[data-keepall]')) { const t = tray(); t.chs.forEach(keepChallenge); t.ideas.forEach(keepIdea); save(); renderAll(); toast(`✨ Kept ${t.chs.length + t.ideas.length}`); }
+  if (e.target.closest('[data-dismissall]')) {
+    const before = JSON.stringify(S.doc), t = tray();
+    t.chs.forEach(dismissChallenge); t.ideas.forEach(i => byId(i.id) && dismissIdea(i)); save(); renderAll();
+    toast('Dismissed all suggestions', () => { S.doc = JSON.parse(before); save(); renderAll(); });
+  }
+});
+
+// Settings popover
 $('#setPop').addEventListener('click', e => {
   const b = e.target.closest('[data-setting] button');
   if (b) { const key = b.parentElement.dataset.setting; S.settings[key] = b.dataset.v; post({cmd:'setting', key, value:b.dataset.v}); renderSettings(); }
+  const prov = () => S.ai.provider;
+  if (e.target.closest('[data-aikey]')) { const v = $('#aiKey').value.trim(); if (v) { post({cmd:'ai', provider:prov(), key:'apiKey', value:v}); $('#aiKey').value = ''; toast('🔑 Key saved in Keychain'); } }
+  if (e.target.closest('[data-aikeyclear]') && confirm('Forget the saved key?')) post({cmd:'ai', provider:prov(), key:'apiKey', value:null});
+  if (e.target.closest('[data-aibase]')) post({cmd:'ai', provider:prov(), key:'base', value:$('#aiBase').value.trim()});
+  if (e.target.closest('[data-airefresh]')) { S.ai.loading = true; renderSettings(); post({cmd:'ai', provider:prov(), key:'refresh'}); }
+  if (e.target.closest('[data-aimodel]')) { const v = $('#aiModel').value.trim(); if (v) post({cmd:'ai', provider:prov(), key:'model', value:v}); }
+  if (e.target.closest('[data-aitest]')) { S.testing = true; S.testResult = null; renderSettings(); post({cmd:'ai', provider:prov(), key:'test'}); }
+  const pd = e.target.closest('[data-pdel]');
+  if (pd) { const p = [...(S.settings.people || [])]; p.splice(+pd.dataset.pdel, 1); S.settings.people = p; post({cmd:'setting', key:'people', value:p}); renderSettings(); }
   if (e.target.closest('[data-reveal]')) post({cmd:'reveal'});
-  const a = e.target.closest('a'); if (a) { e.preventDefault(); post({cmd:'open', url:a.href}); }
+  if (e.target.closest('[data-folder]')) post({cmd:'chooseFolder'});
+  if (e.target.closest('[data-folderreset]')) post({cmd:'chooseFolder', reset:true});
+  if (e.target.closest('[data-update]')) post({cmd:'checkUpdate'});
 });
 $('#setPop').addEventListener('change', e => {
-  const k = e.target.dataset.toggle; if (!k) return;
-  S.settings[k] = e.target.checked; post({cmd:'setting', key:k, value:e.target.checked});
+  const t = e.target;
+  if (t.dataset.ai === 'provider') { S.testResult = null; post({cmd:'ai', provider:t.value, key:'provider'}); return; }
+  if (t.dataset.ai === 'model') {
+    if (t.value === '__other') { $('#otherModel').hidden = false; $('#aiModel').focus(); return; }
+    post({cmd:'ai', provider:S.ai.provider, key:'model', value:t.value}); return;
+  }
+  const k = t.dataset.toggle; if (!k) return;
+  S.settings[k] = t.checked; post({cmd:'setting', key:k, value:t.checked});
   if (k === 'autoShape') renderFilters();
+  if (k === 'pageReading' || k === 'hotkeys') { renderTabs(); renderSettings(); }
 });
-$('#binPop').addEventListener('click', e => {
-  const r = e.target.closest('[data-restore]'), p = e.target.closest('[data-purge]');
-  if (r) { const i = byId(r.dataset.restore); if (i) { setStatus(i, i.prevStatus && i.prevStatus !== 'removed' ? i.prevStatus : 'inbox'); delete i.removedAt; flashIds.add(i.id); save(); render(); renderBin(); toast('↩︎ Restored: ' + nameOf(i)); } }
-  if (p) { S.doc.ideas = ideas().filter(i => i.id !== p.dataset.purge); save(); render(); renderBin(); }
-  if (e.target.closest('[data-purgeall]') && confirm('Delete every removed idea forever?')) { S.doc.ideas = ideas().filter(i => i.status !== 'removed'); save(); render(); renderBin(); }
+$('#setPop').addEventListener('keydown', e => {
+  const t = e.target;
+  if (e.key === 'Enter' && t.dataset.pin !== undefined && t.value.trim()) {
+    const p = [...(S.settings.people || [])], v = t.value.trim();
+    if (!p.some(x => x.toLowerCase() === v.toLowerCase())) p.push(v);
+    S.settings.people = p; post({cmd:'setting', key:'people', value:p}); renderSettings(); $('[data-pin]').focus();
+  }
+  if (e.key === 'Enter' && t.id === 'aiKey') $('[data-aikey]').click();
+  if (e.key === 'Enter' && t.id === 'aiBase') $('[data-aibase]').click();
+  if (e.key === 'Enter' && t.id === 'aiModel') $('[data-aimodel]').click();
 });
 
-// Drawer editing
+// Bin
+$('#binPop').addEventListener('click', e => {
+  const r = e.target.closest('[data-restore]'), p = e.target.closest('[data-purge]');
+  if (r) {
+    const i = byId(r.dataset.restore), c = chById(r.dataset.restore);
+    if (i) { setStatus(i, i.prevStatus && i.prevStatus !== 'removed' ? i.prevStatus : 'inbox'); delete i.removedAt; flashIds.add(i.id); toast('↩︎ Restored: ' + nameOf(i)); }
+    if (c) { c.status = 'open'; delete c.removedAt; touch(c); flashIds.add(c.id); toast(`↩︎ Restored C#${c.n}`); }
+    save(); render(); renderBin();
+  }
+  if (p) { S.doc.ideas = ideas().filter(i => i.id !== p.dataset.purge); S.doc.challenges = chs().filter(c => c.id !== p.dataset.purge); save(); render(); renderBin(); }
+  if (e.target.closest('[data-purgeall]') && confirm('Delete everything in the bin forever?')) {
+    S.doc.ideas = ideas().filter(i => i.status !== 'removed');
+    const gone = new Set(chs().filter(c => c.status === 'dismissed').map(c => c.id));
+    S.doc.challenges = chs().filter(c => !gone.has(c.id));
+    for (const i of ideas()) if (gone.has(i.challenge)) i.challenge = '';
+    save(); render(); renderBin();
+  }
+});
+
+// Drawer editing (ideas and challenges)
 const drawer = $('#drawer');
+const openIdea = () => S.openKind === 'idea' ? byId(S.open) : null;
+const openCh = () => S.openKind === 'challenge' ? chById(S.open) : null;
 drawer.addEventListener('input', e => {
-  const i = byId(S.open); if (!i) return;
-  const t = e.target;
+  const t = e.target, i = openIdea(), c = openCh();
+  if (c && t.dataset.cf) { c[t.dataset.cf] = t.value; touch(c); if (t.classList.contains('d-title')) autosize(t); save(true); render(); return; }
+  if (t.dataset.of) { const x = i || c; if (!x) return; x.origin = Object.assign({by:originOf(x)}, x.origin, {[t.dataset.of]:t.value}); touch(x); save(true); render(); return; }
+  if (!i) return;
   if (t.dataset.f) {
     i[t.dataset.f] = t.value; touch(i);
     if (t.dataset.f === 'app' && !i.home && appHome(t.value)) { i.home = appHome(t.value); renderDrawer(); $('#dApp').focus(); }
@@ -1011,14 +1765,16 @@ drawer.addEventListener('input', e => {
   }
 });
 drawer.addEventListener('change', e => {
-  const i = byId(S.open); if (!i) return;
-  const t = e.target;
+  const t = e.target, i = openIdea();
+  if (!i) return;
   if (t.dataset.step !== undefined) { i.steps[+t.dataset.step].done = t.checked; touch(i); save(); render(); renderDrawer(); }
-  if (t.dataset.f === 'app') renderFilters();
+  if (t.dataset.f === 'app' || t.dataset.f === 'group') { i[t.dataset.f] = t.value.trim(); save(); renderFilters(); render(); }
+  if (t.dataset.chal !== undefined) { i.challenge = t.value; touch(i); save(); render(); renderDrawer(); }
 });
 drawer.addEventListener('keydown', e => {
-  const i = byId(S.open); if (!i) return;
-  const t = e.target;
+  const i = openIdea(), t = e.target;
+  if (e.key === 'Enter' && t.classList.contains('d-title')) { e.preventDefault(); t.blur(); return; }
+  if (!i) return;
   if (e.key === 'Enter' && t.id === 'newStep' && t.value.trim()) {
     i.steps.push({t:t.value.trim(), done:false}); touch(i); save(); render(); renderDrawer(); $('#newStep').focus();
   }
@@ -1030,15 +1786,33 @@ drawer.addEventListener('keydown', e => {
   if (e.key === 'Backspace' && t.dataset.tokin && !t.value && i[t.dataset.tokin].length) {
     const f = t.dataset.tokin; i[f].pop(); touch(i); save(); render(); renderDrawer(); $(`[data-tokin="${f}"]`).focus();
   }
-  if (e.key === 'Enter' && t.classList.contains('d-title')) { e.preventDefault(); t.blur(); }
   if (e.key === 'Enter' && t.id === 'askQ' && !e.isComposing) { e.preventDefault(); ask(i, t.value); }
 });
 drawer.addEventListener('click', e => {
-  const i = byId(S.open); if (!i) return;
+  if (e.target.closest('[data-act="close"]')) { closeDrawer(); return; }
+  const gc = e.target.closest('[data-gochal]');
+  if (gc) { e.preventDefault(); gotoChallenge(gc.dataset.gochal); return; }
+  const go = e.target.closest('[data-goto]');
+  if (go) { gotoIdea(+go.dataset.goto); return; }
   const segBtn = e.target.closest('[data-seg] button');
+  if (segBtn && segBtn.parentElement.dataset.seg === 'origin') {
+    const x = openIdea() || openCh(), v = segBtn.dataset.v;
+    x.origin = v === 'you' ? undefined : Object.assign({}, x.origin, {by:v});
+    if (!x.origin) delete x.origin;
+    touch(x); save(); render(); renderDrawer(); return;
+  }
+  return openIdea() ? ideaClick(e, openIdea(), segBtn) : openCh() ? chClick(e, openCh(), segBtn) : null;
+});
+
+function ideaClick(e, i, segBtn) {
   if (segBtn) {
     const f = segBtn.parentElement.dataset.seg, v = segBtn.dataset.v;
     if (f === 'status') { const was = i.status; setStatus(i, v); if (v === 'shipped' && was !== 'shipped') { const r = segBtn.getBoundingClientRect(); confetti(r.left + r.width / 2, r.top); } }
+    else if (f === 'impact' || f === 'effort') {
+      if (i[f] === v) { delete i.impact; delete i.effort; }
+      else { i[f] = v; if (!i.impact) i.impact = 'high'; if (!i.effort) i.effort = 'low'; }
+      delete i.placeWhy; touch(i);
+    }
     else { i[f] = i[f] === v && f !== 'priority' ? '' : v; touch(i); }
     save(); render(); renderDrawer(); return;
   }
@@ -1057,26 +1831,66 @@ drawer.addEventListener('click', e => {
     toast(`🧭 ${c.steps.length} build steps set`, () => { i.steps = old; save(); render(); renderDrawer(); });
     return;
   }
-  const go = e.target.closest('[data-goto]');
-  if (go) { gotoIdea(+go.dataset.goto); return; }
-  const act = e.target.closest('[data-act]')?.dataset.act;
-  if (act === 'close') closeDrawer();
+  const btn = e.target.closest('[data-act]'), act = btn?.dataset.act;
+  if (act === 'keep') { keepIdea(i); save(); renderAll(); renderDrawer(); toast(`✨ Kept as #${i.n}`); }
+  if (act === 'dismiss') { dismissIdea(i); save(); closeDrawer(); renderAll(); }
   if (act === 'ask') ask(i, $('#askQ').value);
   if (act === 'build') {
-    post({cmd:'build', brief:brief(i), app:i.app || '', n:i.n});
-    if (i.status === 'inbox' || i.status === 'shaped') { setStatus(i, 'building'); save(); render(); renderDrawer(); }
+    if (i.status === 'suggested') keepIdea(i);
+    post({cmd:'build', brief:brief(i), app:i.app || '', n:i.n, tool:btn.dataset.tool});
+    if (i.status === 'inbox' || i.status === 'shaped') setStatus(i, 'building');
+    save(); render(); renderDrawer();
   }
   if (act === 'reshape') { shape(i, true); renderDrawer(); }
   if (act === 'brief') { post({cmd:'copy', text:brief(i)}); toast('📋 Brief copied — paste it to whoever can help'); }
+  if (act === 'issue') {
+    const app = S.apps.find(a => a.name.toLowerCase() === (i.app || '').toLowerCase());
+    const repo = app && safeUrl(app.repo);
+    if (repo) post({cmd:'open', url:`${repo.replace(/\/$/, '')}/issues/new?title=${encodeURIComponent(nameOf(i))}&body=${encodeURIComponent(brief(i))}`});
+  }
   if (act === 'remove') {
     const prev = i.status, order = i.order;
     setStatus(i, 'removed'); save(); closeDrawer(); render();
     toast('🗑 Removed: ' + nameOf(i), () => { i.status = prev; i.order = order; delete i.removedAt; save(); render(); });
   }
-});
+}
+
+function chClick(e, c, segBtn) {
+  if (segBtn) {
+    const f = segBtn.parentElement.dataset.seg, v = segBtn.dataset.v;
+    if (f === 'cstatus') { c.status = v; if (v === 'solved') c.solvedAt = now(); else delete c.solvedAt; }
+    if (f === 'cimpact') c.impact = v;
+    if (f === 'coften') c.often = v;
+    touch(c); save(); render(); renderDrawer(); return;
+  }
+  const lk = e.target.closest('.linked[data-open]');
+  if (lk) { openDrawer(lk.dataset.open); return; }
+  const k = e.target.closest('[data-keep]'), dm = e.target.closest('[data-dismiss]');
+  if (k) { const i = byId(k.dataset.keep); if (i) { keepIdea(i); save(); renderAll(); renderDrawer(); toast(`✨ Kept as #${i.n}`); } return; }
+  if (dm) { const i = byId(dm.dataset.dismiss); if (i) { dismissIdea(i); save(); renderAll(); renderDrawer(); } return; }
+  const pk = e.target.closest('[data-peek]');
+  if (pk) { openDrawer(pk.dataset.peek); return; }
+  const act = e.target.closest('[data-act]')?.dataset.act;
+  if (act === 'keep') { keepChallenge(c); save(); renderAll(); renderDrawer(); toast(`🧗 Kept as C#${c.n}`); }
+  if (act === 'dismiss') { dismissChallenge(c); save(); closeDrawer(); renderAll(); }
+  if (act === 'hit') { c.hits = (c.hits || 1) + 1; c.lastHit = now(); touch(c); save(); render(); renderDrawer(); }
+  if (act === 'hitminus') { c.hits = Math.max(1, (c.hits || 1) - 1); touch(c); save(); render(); renderDrawer(); }
+  if (act === 'spark') spark(c);
+  if (act === 'ownidea') {
+    const i = newIdea({title:'', raw:'', challenge:c.id, status:'inbox'});
+    ideas().push(i); flashIds.add(i.id); save(); render(); openDrawer(i.id);
+  }
+  if (act === 'chreshape') { shapeChallenge(c); renderDrawer(); }
+  if (act === 'chcopy') { post({cmd:'copy', text:chText(c)}); toast('📋 Challenge copied'); }
+  if (act === 'chremove') {
+    const prev = c.status;
+    c.status = 'dismissed'; c.removedAt = now(); touch(c); save(); closeDrawer(); render();
+    toast(`🗑 Removed C#${c.n}`, () => { c.status = prev; delete c.removedAt; save(); render(); });
+  }
+}
 
 document.addEventListener('keydown', e => {
-  const typing = e.target.closest('input,textarea');
+  const typing = e.target.closest('input,textarea,select');
   if (e.key === 'Escape') {
     if ($$('.pop.on').length) $$('.pop').forEach(p => p.classList.remove('on'));
     else if (S.open) closeDrawer();
@@ -1084,14 +1898,15 @@ document.addEventListener('keydown', e => {
     else if (typing) e.target.blur();
     return;
   }
-  if (typing || e.metaKey || e.ctrlKey) return;
+  if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
   if (e.key === '/') { e.preventDefault(); $('#q').focus(); }
   if (e.key === 'n') { e.preventDefault(); forge.focusCapture(); }
+  if (['1', '2', '3'].includes(e.key) && !S.open) setTab(['ideas', 'challenges', 'matrix'][+e.key - 1]);
 });
 
 // Opened in a plain browser (no app around it): show the demo board so the page can be previewed.
 if (!window.webkit?.messageHandlers?.forge) {
-  fetch('demo.json').then(r => r.json()).then(doc => forge.load({doc, demo:true, apps:[], claude:false, settings:{}})).catch(() => forge.load({doc:{ideas:[]}}));
+  fetch('demo.json').then(r => r.json()).then(doc => forge.load({doc, demo:true, apps:[], settings:{}})).catch(() => forge.load({doc:{ideas:[]}}));
 } else {
   post({cmd:'ready'});
 }

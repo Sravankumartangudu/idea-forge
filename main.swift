@@ -1,11 +1,13 @@
 // Idea Forge — a menu-bar backlog for the apps and agents you want to build next.
 //
-// Drop a raw thought in, Claude shapes it into a card (title, what it does, where it ships, build steps),
-// and you drag cards across the board from 💭 Inbox to 🚀 Shipped. Ideas live only on this Mac, in
-// ~/Library/Application Support/<Edition.folder>/ideas.json. The app watches that file, so anything else
-// that edits it (a script, a Claude Code session) shows up on the board at once.
+// Drop a raw thought in, the AI shapes it into a card (title, what it does, where it ships, build steps),
+// and you drag cards across the board from 💭 Inbox to 🚀 Shipped. 🧗 Challenges hold the problems that
+// keep slowing you down; ideas get sparked from them, and 📎 Capture pulls both from the page you're on.
+// Everything lives only on this Mac, in ~/Library/Application Support/<Edition.folder>/ideas.json (or a
+// folder you pick). The app watches that file, so anything else that edits it shows up at once.
 //
-// Shared core: the personal and work editions differ only in Edition.swift.
+// Shared core: the personal and work editions differ only in Edition.swift. AI.swift talks to the AI,
+// Extras.swift holds hotkeys, page reading, quick capture, the digest and the update check.
 
 import AppKit
 import ServiceManagement
@@ -39,14 +41,79 @@ enum Settings {
         get { d.object(forKey: "showCount") as? Bool ?? true }
         set { d.set(newValue, forKey: "showCount") }
     }
-    /// Shape new thoughts with Claude as soon as they're added.
+    /// Shape new thoughts with the AI as soon as they're added.
     static var autoShape: Bool {
         get { d.object(forKey: "autoShape") as? Bool ?? true }
         set { d.set(newValue, forKey: "autoShape") }
     }
+    /// Suggest ideas for a challenge as soon as it's shaped.
+    static var autoSpark: Bool {
+        get { d.object(forKey: "autoSpark") as? Bool ?? true }
+        set { d.set(newValue, forKey: "autoSpark") }
+    }
+    /// Run 🔍 Find challenges once a day in the background.
+    static var autoFind: Bool {
+        get { d.object(forKey: "autoFind") as? Bool ?? false }
+        set { d.set(newValue, forKey: "autoFind") }
+    }
+    static var lastFind: Date? {
+        get { d.object(forKey: "lastFind") as? Date }
+        set { d.set(newValue, forKey: "lastFind") }
+    }
+    /// A weekly notification: added, shipped, open challenges.
+    static var digest: Bool {
+        get { d.object(forKey: "digest") as? Bool ?? true }
+        set { d.set(newValue, forKey: "digest") }
+    }
+    static var lastDigest: Date? {
+        get { d.object(forKey: "lastDigest") as? Date }
+        set { d.set(newValue, forKey: "lastDigest") }
+    }
+    /// 📎 Reading the page you're on, and the edition's connected systems. Off until you turn it on,
+    /// and only in an edition that offers it.
+    static var pageReading: Bool {
+        get { Edition.pageReading && d.bool(forKey: "pageReading") }
+        set { d.set(newValue, forKey: "pageReading") }
+    }
+    /// ⌃⌥N (quick capture) and, with page reading on, ⌃⌥I (capture the page) from anywhere.
+    static var hotkeys: Bool {
+        get { d.object(forKey: "hotkeys") as? Bool ?? true }
+        set { d.set(newValue, forKey: "hotkeys") }
+    }
+    /// Use ⌃⌥⇧ instead, e.g. when another app already has ⌃⌥I.
+    static var hotkeyShift: Bool {
+        get { d.bool(forKey: "hotkeyShift") }
+        set { d.set(newValue, forKey: "hotkeyShift") }
+    }
+    /// People you add yourself, for "Who can help" and "Added by".
+    static var people: [String] {
+        get { d.stringArray(forKey: "people") ?? [] }
+        set { d.set(newValue, forKey: "people") }
+    }
+    /// Yours plus the edition's (e.g. a shared team list).
+    static var allPeople: [String] {
+        Array(Set(people + Edition.people())).sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+    }
+    /// A folder you picked for ideas.json (e.g. in iCloud Drive); nil = Application Support.
+    static var dataDir: String? {
+        get { Edition.dataFolderChoice ? d.string(forKey: "dataDir") : nil }
+        set { d.set(newValue, forKey: "dataDir") }
+    }
+    /// The last release we told you about, so each one is announced once.
+    static var toldUpdate: String {
+        get { d.string(forKey: "toldUpdate") ?? "" }
+        set { d.set(newValue, forKey: "toldUpdate") }
+    }
 }
 
 // MARK: - Store (ideas.json, watched for outside edits)
+
+private let isoDate: (String?) -> Date? = { s in
+    guard let s else { return nil }
+    let f = ISO8601DateFormatter()
+    f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    return f.date(from: s) ?? ISO8601DateFormatter().date(from: s)
+}
 
 /// Just what the menu needs. The board owns the full schema and saves the whole file.
 struct Idea: Decodable {
@@ -60,6 +127,12 @@ struct Idea: Decodable {
     let type: String?
     let app: String?
     let home: String?
+    let created: String?
+    let shippedAt: String?
+    /// The challenge it was sparked from.
+    let challenge: String?
+    /// The agent or app it belongs to, so related ideas sit together.
+    let group: String?
 
     var name: String {
         let t = (title ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
@@ -67,16 +140,53 @@ struct Idea: Decodable {
         let r = (raw ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         return r.isEmpty ? "Untitled idea" : String(r.prefix(60))
     }
+    /// inbox · shaped · building · shipped · parked · removed, or "suggested" (✨ waiting in the tray).
     var stage: String { status ?? "inbox" }
+    /// Its group, else the app it's for.
+    var groupName: String {
+        let g = (group ?? "").trimmingCharacters(in: .whitespaces)
+        return g.isEmpty ? (app ?? "").trimmingCharacters(in: .whitespaces) : g
+    }
     var pending: Bool { ["inbox", "shaped", "building"].contains(stage) }
+    var createdAt: Date? { isoDate(created) }
+    var shippedDate: Date? { isoDate(shippedAt) }
+}
+
+/// A problem that keeps slowing you down; ideas are sparked from it.
+struct Challenge: Decodable {
+    let id: String
+    let n: Int?
+    let title: String?
+    let detail: String?
+    /// suggested · open · solved · dismissed
+    let status: String?
+    let impact: String?
+    let often: String?
+    let hits: Int?
+
+    var name: String {
+        let t = (title ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        return t.isEmpty ? String((detail ?? "Untitled challenge").prefix(60)) : t
+    }
+    var stage: String { status ?? "open" }
+    /// How much it's worth solving: impact × how often × times hit.
+    var heat: Int {
+        let i = ["high": 3, "med": 2, "low": 1][impact ?? "med"] ?? 2
+        let o = ["daily": 4, "weekly": 3, "monthly": 2, "rare": 1][often ?? "weekly"] ?? 2
+        return i * o * max(1, hits ?? 1)
+    }
 }
 
 final class Store {
     static let shared = Store()
-    let dir: URL
-    let file: URL
+    /// App Support/<folder>: settings files, the model cache, build scripts. Never moves.
+    let support: URL
+    /// Where ideas.json lives (support, or a folder you picked).
+    private(set) var dir: URL
+    var file: URL { dir.appendingPathComponent("ideas.json") }
     private(set) var data = Data()
     private(set) var ideas: [Idea] = []
+    private(set) var challenges: [Challenge] = []
     var onChange: (() -> Void)?
     private var source: DispatchSourceFileSystemObject?
     private var pending: DispatchWorkItem?
@@ -84,22 +194,45 @@ final class Store {
     let demo = CommandLine.arguments.contains("--demo")
 
     init() {
-        dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+        support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
             .appendingPathComponent(Edition.folder, isDirectory: true)
-        file = dir.appendingPathComponent("ideas.json")
-        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        try? FileManager.default.createDirectory(at: support, withIntermediateDirectories: true)
+        var isDir: ObjCBool = false
+        if let p = Settings.dataDir, FileManager.default.fileExists(atPath: p, isDirectory: &isDir), isDir.boolValue {
+            dir = URL(fileURLWithPath: p, isDirectory: true)
+        } else {
+            dir = support
+        }
         if demo, let u = Bundle.main.url(forResource: "demo", withExtension: "json"), let d = try? Data(contentsOf: u) {
             apply(d)
         } else {
-            apply((try? Data(contentsOf: file)) ?? Data(#"{"version":1,"ideas":[]}"#.utf8))
+            apply((try? Data(contentsOf: file)) ?? Data(#"{"version":1,"ideas":[],"challenges":[]}"#.utf8))
             watch()
         }
     }
 
     private func apply(_ d: Data) {
-        struct File: Decodable { let ideas: [Idea] }
+        struct File: Decodable { let ideas: [Idea]?; let challenges: [Challenge]? }
         data = d
-        ideas = (try? JSONDecoder().decode(File.self, from: d))?.ideas ?? []
+        let f = try? JSONDecoder().decode(File.self, from: d)
+        ideas = f?.ideas ?? []
+        challenges = f?.challenges ?? []
+    }
+
+    /// Points the board at another folder (nil = back to Application Support). If the folder has no
+    /// ideas.json yet, the current one is copied there, so nothing is lost; if it has one, that one is used.
+    func move(to newDir: URL?) {
+        let target = newDir ?? support
+        guard target.standardizedFileURL != dir.standardizedFileURL else { return }
+        let dest = target.appendingPathComponent("ideas.json")
+        if !FileManager.default.fileExists(atPath: dest.path) { try? data.write(to: dest, options: .atomic) }
+        Settings.dataDir = newDir?.path
+        source?.cancel()
+        source = nil
+        dir = target
+        apply((try? Data(contentsOf: file)) ?? data)
+        if !demo { watch() }
+        onChange?()
     }
 
     /// The board sends the whole document after every change.
@@ -152,7 +285,7 @@ final class Store {
             guard !list.isEmpty else { continue }
             out.append("\n### \(label) (\(list.count))")
             for i in list {
-                var tags = [types[i.type ?? ""], (i.app ?? "").isEmpty ? nil : i.app, homes[i.home ?? ""], prio[i.priority ?? ""]].compactMap { $0 }
+                var tags = [types[i.type ?? ""], i.groupName.isEmpty ? nil : "▤ " + i.groupName, homes[i.home ?? ""], prio[i.priority ?? ""]].compactMap { $0 }
                 if tags.isEmpty { tags = ["unshaped"] }
                 let ref = i.n.map { "#\($0) " } ?? ""
                 let sum = (i.summary ?? "").isEmpty ? "" : " — \(i.summary!)"
@@ -160,6 +293,18 @@ final class Store {
             }
         }
         if open.isEmpty { out.append("\nNothing pending. Drop a thought in to get started.") }
+        let hot = challenges.filter { $0.stage == "open" }.sorted { $0.heat > $1.heat }
+        if !hot.isEmpty {
+            out.append("\n### 🧗 Open challenges (\(hot.count))")
+            for c in hot {
+                let ideasFor = ideas.filter { $0.pending && $0.challenge == c.id }.compactMap { $0.n }.map { "#\($0)" }
+                let tags = [c.impact.map { "\($0) impact" }, c.often, (c.hits ?? 1) > 1 ? "hit \(c.hits!)×" : nil,
+                            ideasFor.isEmpty ? nil : "ideas " + ideasFor.joined(separator: " ")].compactMap { $0 }
+                out.append("- [ ] C#\(c.n ?? 0) **\(c.name)**\(tags.isEmpty ? "" : " _(\(tags.joined(separator: " · ")))_")")
+            }
+        }
+        let tray = ideas.filter { $0.stage == "suggested" }.count + challenges.filter { $0.stage == "suggested" }.count
+        if tray > 0 { out.append("\n✨ \(tray) suggestion\(tray == 1 ? "" : "s") waiting in the tray.") }
         return out.joined(separator: "\n")
     }
 }
@@ -174,275 +319,55 @@ enum Fleet {
         let home = fm.homeDirectoryForCurrentUser
         func key(_ s: String) -> String { s.lowercased().filter { $0.isLetter || $0.isNumber } }
 
-        var folders: [String: (name: String, home: String, path: String)] = [:]
+        var folders: [String: (name: String, home: String, path: String, repo: String)] = [:]
         for name in (try? fm.contentsOfDirectory(atPath: home.path)) ?? [] where !name.hasPrefix(".") {
             let dir = home.appendingPathComponent(name)
             let looksLikeApp = ["build.sh", "package.json", "app/build.sh", "mac/build.sh"].contains {
                 fm.fileExists(atPath: dir.appendingPathComponent($0).path)
             }
             guard looksLikeApp else { continue }
-            folders[key(name)] = (name, originHome(dir.appendingPathComponent(".git/config")), dir.path)
+            let o = origin(dir.appendingPathComponent(".git/config"))
+            folders[key(name)] = (name, o.home, dir.path, o.repo)
         }
 
-        var out: [String: (home: String, path: String)] = [:]
+        var out: [String: (home: String, path: String, repo: String)] = [:]
         let beats = home.appendingPathComponent(".nexus/heartbeats")
         for f in (try? fm.contentsOfDirectory(at: beats, includingPropertiesForKeys: nil)) ?? [] where f.pathExtension == "json" {
             guard !f.lastPathComponent.hasPrefix("com.test."),
                   let d = try? Data(contentsOf: f),
                   let o = try? JSONSerialization.jsonObject(with: d) as? [String: Any],
                   let n = o["name"] as? String, !n.isEmpty else { continue }
-            if let f = folders.removeValue(forKey: key(n)) { out[n] = (f.home, f.path) } else if out[n] == nil { out[n] = ("", "") }
+            if let f = folders.removeValue(forKey: key(n)) { out[n] = (f.home, f.path, f.repo) } else if out[n] == nil { out[n] = ("", "", "") }
         }
-        for (_, f) in folders { out[f.name] = (f.home, f.path) }
+        for (_, f) in folders { out[f.name] = (f.home, f.path, f.repo) }
         return out.keys.sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
-            .map { ["name": $0, "home": out[$0]?.home ?? "", "path": out[$0]?.path ?? ""] }
+            .map { ["name": $0, "home": out[$0]?.home ?? "", "path": out[$0]?.path ?? "", "repo": out[$0]?.repo ?? ""] }
     }
 
-    private static func originHome(_ config: URL) -> String {
-        guard let text = try? String(contentsOf: config, encoding: .utf8) else { return "local" }
+    /// Home from the git origin, plus the repo's web page ("https://host/owner/repo") for "Open as issue".
+    private static func origin(_ config: URL) -> (home: String, repo: String) {
+        guard let text = try? String(contentsOf: config, encoding: .utf8) else { return ("local", "") }
         var inOrigin = false
         for line in text.components(separatedBy: .newlines) {
             let t = line.trimmingCharacters(in: .whitespaces)
             if t.hasPrefix("[") { inOrigin = t == #"[remote "origin"]"# ; continue }
             if inOrigin, t.hasPrefix("url") {
-                return t.contains("github.com") ? "personal" : "work"
+                return (t.contains("github.com") ? "personal" : "work", webURL(t.components(separatedBy: "=").dropFirst().joined(separator: "=")))
             }
         }
-        return "local"
+        return ("local", "")
     }
-}
 
-// MARK: - Claude (the local `claude` CLI, one tool-less turn per task)
-
-enum Claude {
-    struct Failure: LocalizedError { let errorDescription: String? }
-
-    static let available: Bool = {
-        let p = Process()
-        p.executableURL = URL(fileURLWithPath: "/bin/zsh")
-        p.arguments = ["-lc", #"export PATH="$HOME/.local/bin:$HOME/.devbar/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"; command -v claude >/dev/null"#]
-        p.standardOutput = FileHandle.nullDevice; p.standardError = FileHandle.nullDevice
-        do { try p.run(); p.waitUntilExit(); return p.terminationStatus == 0 } catch { return false }
-    }()
-
-    /// Copies only the auth keys from ~/.claude/settings.json: user settings are skipped
-    /// (`--setting-sources project`) so no allow-list or hook from them can ride along.
-    private static func authSettings() -> URL {
-        let out = Store.shared.dir.appendingPathComponent("auth-settings.json")
-        let user = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".claude/settings.json")
-        var auth: [String: Any] = [:]
-        if let d = try? Data(contentsOf: user), let all = try? JSONSerialization.jsonObject(with: d) as? [String: Any] {
-            for k in ["apiKeyHelper", "env", "awsAuthRefresh", "awsCredentialExport", "forceLoginMethod"] { auth[k] = all[k] }
+    /// git@host:owner/repo.git, ssh://git@host/owner/repo, https://user@host/owner/repo.git → https://host/owner/repo
+    private static func webURL(_ raw: String) -> String {
+        var s = raw.trimmingCharacters(in: .whitespaces)
+        if s.hasSuffix(".git") { s.removeLast(4) }
+        if let m = s.range(of: #"^[\w.-]+@([^:/]+):(.+)$"#, options: .regularExpression), m.lowerBound == s.startIndex {
+            let host = s.components(separatedBy: "@")[1].components(separatedBy: ":")[0]
+            return "https://\(host)/" + s.components(separatedBy: ":").dropFirst().joined(separator: ":")
         }
-        if let d = try? JSONSerialization.data(withJSONObject: auth) {
-            try? d.write(to: out, options: .atomic)
-            try? FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: out.path)
-        }
-        return out
-    }
-
-    /// Runs one turn with no tools and a JSON schema. `done` gets the structured output (or an error) on the main queue.
-    static func run(task: String, system: String, schema: String, prompt: String,
-                    done: @escaping (Result<[String: Any], Error>) -> Void) {
-        let model = Edition.model(Settings.model)
-        let p = Process()
-        p.executableURL = URL(fileURLWithPath: "/bin/zsh")
-        p.arguments = ["-lc", #"export PATH="$HOME/.local/bin:$HOME/.devbar/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"; exec claude "$@""#,
-                       "ideaforge", "-p", "--output-format", "json", "--tools", "", "--no-session-persistence",
-                       "--disable-slash-commands", "--setting-sources", "project", "--settings", authSettings().path,
-                       "--append-system-prompt", system, "--json-schema", schema, "--model", model, prompt]
-        p.currentDirectoryURL = Store.shared.dir
-        var env = ProcessInfo.processInfo.environment.filter {
-            !["CLAUDECODE", "CLAUDE_CODE_ENTRYPOINT", "CLAUDE_CODE_SESSION_ID"].contains($0.key)
-        }
-        env["CLAUDE_CODE_DISABLE_AUTO_MEMORY"] = "1"
-        p.environment = env
-        let out = Pipe(), err = Pipe()
-        p.standardOutput = out; p.standardError = err
-        p.standardInput = FileHandle.nullDevice
-
-        let killer = DispatchWorkItem { if p.isRunning { p.terminate() } }
-        DispatchQueue.global().asyncAfter(deadline: .now() + 150, execute: killer)
-        DispatchQueue.global().async {
-            do { try p.run() } catch {
-                DispatchQueue.main.async { done(.failure(Failure(errorDescription: "Couldn't start Claude: \(error.localizedDescription)"))) }
-                return
-            }
-            let o = out.fileHandleForReading.readDataToEndOfFile()
-            let e = err.fileHandleForReading.readDataToEndOfFile()
-            p.waitUntilExit()
-            killer.cancel()
-            Edition.logUsage(task: task, model: model, output: o)
-            let obj = try? JSONSerialization.jsonObject(with: o) as? [String: Any]
-            let result: Result<[String: Any], Error>
-            if let s = obj?["structured_output"] as? [String: Any] {
-                result = .success(s)
-            } else {
-                var msg = (obj?["result"] as? String) ?? String(decoding: e, as: UTF8.self)
-                msg = msg.trimmingCharacters(in: .whitespacesAndNewlines)
-                if p.terminationReason == .uncaughtSignal { msg = "Claude took too long (over 2½ minutes)." }
-                result = .failure(Failure(errorDescription: msg.isEmpty ? "Claude returned nothing (exit \(p.terminationStatus))." : String(msg.suffix(300))))
-            }
-            DispatchQueue.main.async { done(result) }
-        }
-    }
-
-    // MARK: Shape (raw thought → one or more cards)
-
-    static let persona = """
-    You turn a raw, possibly messy thought into crisp backlog cards for someone who builds small macOS \
-    apps and AI agents. The thought may be half-formed, in mixed language, or hold several \
-    ideas at once — split distinct ideas into separate cards, but keep one idea as one card. Restate each \
-    idea in plain, simple English so anyone can understand it.
-
-    For each card:
-    - title: short and specific, starts with a verb, at most 60 characters.
-    - summary: one or two sentences — what it does and who it helps.
-    - why: one sentence on the value.
-    - type: "agent" for a brand-new app or agent, "enhancement" to add to an existing app, "fix" when \
-    something is broken, "chore" for housekeeping (archive, delete, clean up, docs).
-    - app: the existing app it belongs to, exactly as named in the list you're given; empty for a new agent.
-    - home: where it ships. "personal" if it is generic and useful to anyone (fine on public GitHub); \
-    "work" if it touches an employer's systems, internal data, customers or colleagues; "local" if it \
-    should stay private on this Mac. For an existing app, use that app's home. Empty if truly unclear.
-    - priority: "high" only if the thought says it is urgent or blocking, "low" if it is a someday idea, else "med".
-    - steps: 3 to 6 short, concrete build steps.
-    - helpers: names of people the thought says could help or should be asked; else empty.
-    - tags: up to 3 short lowercase tags.
-    - similar: numbers of ideas already on the board that this card overlaps with or duplicates; else empty.
-    Never invent facts that aren't in the thought; keep unknowns out rather than guessing.
-    """
-
-    static let shapeSchema = """
-    {"type":"object","required":["ideas"],"properties":{"ideas":{"type":"array","minItems":1,"items":{"type":"object",
-    "required":["title","summary","why","type","app","home","priority","steps","helpers","tags","similar"],"properties":{
-    "title":{"type":"string"},"summary":{"type":"string"},"why":{"type":"string"},
-    "type":{"type":"string","enum":["agent","enhancement","fix","chore"]},"app":{"type":"string"},
-    "home":{"type":"string","enum":["personal","work","local",""]},
-    "priority":{"type":"string","enum":["high","med","low"]},
-    "steps":{"type":"array","items":{"type":"string"}},"helpers":{"type":"array","items":{"type":"string"}},
-    "tags":{"type":"array","items":{"type":"string"}},"similar":{"type":"array","items":{"type":"integer"}}}}}}}
-    """
-
-    /// Pending ideas as "#n [stage] title — summary", for prompts that should know the board.
-    static func boardLines(except id: String? = nil) -> [String] {
-        Store.shared.ideas.filter { ($0.pending || $0.stage == "parked") && $0.id != id }.map { i in
-            let sum = (i.summary ?? "").isEmpty ? "" : " — \(i.summary!)"
-            return "#\(i.n ?? 0) [\(i.stage)] \(i.name)\(i.app.map { $0.isEmpty ? "" : " (for \($0))" } ?? "")\(sum)"
-        }
-    }
-
-    static func shape(_ thought: String, id: String, single: Bool, done: @escaping (Result<[[String: Any]], Error>) -> Void) {
-        let apps = Fleet.apps().map { a in "\(a["name"]!) — \(a["home"]!.isEmpty ? "unknown" : a["home"]!)" }
-        // Only the editions with the Claude tools look for duplicates (it makes every prompt longer).
-        let board = Edition.claudeTools ? boardLines(except: id) : []
-        let prompt = """
-        Existing apps (name — home):
-        \(apps.isEmpty ? "(none found)" : apps.joined(separator: "\n"))
-        \(board.isEmpty ? "" : "\nIdeas already on the board:\n" + board.joined(separator: "\n") + "\n")
-        \(single ? "Return exactly ONE card for this thought." : "Shape this thought into one or more cards.")
-        Thought:
-        \(thought)
-        """
-        let system = Edition.personaNote.isEmpty ? persona : persona + "\n\n" + Edition.personaNote
-        run(task: "Shape ideas", system: system, schema: shapeSchema, prompt: prompt) { r in
-            switch r {
-            case .success(let s):
-                if let cards = s["ideas"] as? [[String: Any]], !cards.isEmpty { done(.success(cards)) }
-                else { done(.failure(Failure(errorDescription: "Claude returned no cards."))) }
-            case .failure(let e): done(.failure(e))
-            }
-        }
-    }
-
-    // MARK: Ask (a question about one idea)
-
-    static let askPersona = """
-    You help someone think through one idea from their backlog of apps and AI agents to build. Answer \
-    their question about it directly and practically, in plain English, at most 150 words. Use short \
-    "- " bullet lines when listing things; no headings, no bold. If the question asks for a plan or \
-    build steps, also return them in `steps` (3 to 8 short, concrete steps); otherwise return [] for steps. \
-    Don't invent facts about their systems or people; say what you'd need to know instead.
-    """
-    static let askSchema = """
-    {"type":"object","required":["answer","steps"],"properties":{"answer":{"type":"string"},
-    "steps":{"type":"array","items":{"type":"string"}}}}
-    """
-
-    static func ask(brief: String, question: String, id: String, done: @escaping (Result<[String: Any], Error>) -> Void) {
-        let board = boardLines(except: id)
-        let people = Edition.people()
-        let prompt = """
-        The idea:
-        \(brief)
-        \(board.isEmpty ? "" : "\nOther ideas on the board (for context):\n" + board.prefix(40).joined(separator: "\n") + "\n")
-        \(people.isEmpty ? "" : "\nPeople on my team (name any who fit when asked who could help):\n" + people.joined(separator: ", ") + "\n")
-        Question:
-        \(question)
-        """
-        let system = Edition.personaNote.isEmpty ? askPersona : askPersona + "\n\n" + Edition.personaNote
-        run(task: "Ask about an idea", system: system, schema: askSchema, prompt: prompt, done: done)
-    }
-
-    // MARK: What next (pick from the whole board)
-
-    static let nextPersona = """
-    You look at someone's backlog of apps and AI agents to build and pick what they should do next. \
-    Pick up to 3 pending ideas (never shipped, parked or removed ones). Favour finishing what is already \
-    being built, anything urgent or blocking, and quick wins with clear value. For each pick give one \
-    plain sentence on why now. Then one short sentence of overall advice in `note` (e.g. too much in \
-    progress, something stale to park).
-    """
-    static let nextSchema = """
-    {"type":"object","required":["picks","note"],"properties":{"picks":{"type":"array","maxItems":3,"items":{"type":"object",
-    "required":["n","why"],"properties":{"n":{"type":"integer"},"why":{"type":"string"}}}},"note":{"type":"string"}}}
-    """
-
-    static func whatNext(_ board: String, done: @escaping (Result<[String: Any], Error>) -> Void) {
-        let prompt = "Today is \(Date().formatted(date: .complete, time: .omitted)).\n\nThe board:\n\(board)"
-        let system = Edition.personaNote.isEmpty ? nextPersona : nextPersona + "\n\n" + Edition.personaNote
-        run(task: "What to build next", system: system, schema: nextSchema, prompt: prompt, done: done)
-    }
-
-    // MARK: Build (hand a card to an interactive Claude Code session in Terminal)
-
-    /// Writes the prompt and a .command script, then opens it: Terminal runs `claude` in the app's folder.
-    /// (A .command file needs no Automation permission, unlike scripting Terminal.)
-    static func build(brief: String, app: String, number: Int) -> Bool {
-        let path = Fleet.apps().first { $0["name"]!.caseInsensitiveCompare(app) == .orderedSame }?["path"] ?? ""
-        let dir = path.isEmpty ? NSHomeDirectory() : path
-        let fresh = path.isEmpty
-        var prompt = """
-        I want to build this idea from my \(Edition.name) board (#\(number)):
-
-        \(brief)
-
-        """
-        prompt += fresh
-            ? "\(app.isEmpty ? "It's a new app or agent." : "It's for \(app), but I couldn't find its folder.") Look around before you start, suggest a folder name in ~, and confirm the plan with me first."
-            : "The code for \(app) is in this folder. Read it first, then propose a short plan and confirm it with me before making changes."
-        if !Edition.buildNote.isEmpty { prompt += "\n\n" + Edition.buildNote }
-        let runs = Store.shared.dir.appendingPathComponent("build", isDirectory: true)
-        try? FileManager.default.createDirectory(at: runs, withIntermediateDirectories: true)
-        let promptFile = runs.appendingPathComponent("idea-\(number).md")
-        let script = runs.appendingPathComponent("idea-\(number).command")
-        func q(_ s: String) -> String { "'" + s.replacingOccurrences(of: "'", with: #"'\''"#) + "'" }
-        let sh = """
-        #!/bin/zsh -l
-        # Opened by \(Edition.name): a Claude Code session for idea #\(number).
-        export PATH="$HOME/.local/bin:$HOME/.devbar/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
-        cd \(q(dir)) || exit 1
-        clear
-        echo "\(Edition.symbol)  \(Edition.name) → Claude Code · idea #\(number)"
-        exec claude "$(cat \(q(promptFile.path)))"
-
-        """
-        do {
-            try prompt.write(to: promptFile, atomically: true, encoding: .utf8)
-            try sh.write(to: script, atomically: true, encoding: .utf8)
-            try FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: script.path)
-        } catch { return false }
-        return NSWorkspace.shared.open(script)
+        guard let u = URL(string: s), let host = u.host, u.path.count > 1 else { return "" }
+        return "https://\(host)\(u.path)"
     }
 }
 
@@ -451,6 +376,10 @@ enum Claude {
 final class App: NSObject, NSApplicationDelegate, NSMenuDelegate {
     let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     let board = Board()
+    let quick = QuickPanel()
+    /// Background jobs running (page reads, finds): the menu-bar title shows "…" while any are.
+    var working = 0 { didSet { updateTitle() } }
+    private var tick: Timer?
 
     func applicationDidFinishLaunching(_ n: Notification) {
         Settings.applyAppearance()
@@ -463,7 +392,8 @@ final class App: NSObject, NSApplicationDelegate, NSMenuDelegate {
         NexusBeacon.start(name: Edition.name) {
             let ideas = store.ideas
             let building = ideas.filter { $0.stage == "building" }.count
-            return ("ok", "\(ideas.filter { $0.pending }.count) pending · \(building) building")
+            let open = store.challenges.filter { $0.stage == "open" }.count
+            return ("ok", "\(ideas.filter { $0.pending }.count) pending · \(building) building · \(open) challenges")
         }
         let menu = NSMenu()
         menu.delegate = self
@@ -476,21 +406,127 @@ final class App: NSObject, NSApplicationDelegate, NSMenuDelegate {
             self?.board.push()
             NexusBeacon.beat()
         }
+        PageReader.start()
+        Notify.shared.start()
+        Notify.shared.onOpen = { [weak self] script in self?.board.show(then: script.isEmpty ? nil : script) }
+        quick.onSubmit = { [weak self] kind, text in
+            self?.board.ensure(then: "forge.quick(\(Board.js(kind)), \(Board.js(text)))")
+        }
+        registerHotkeys()
         if CommandLine.arguments.contains("--board") || store.demo { board.show() }
+        // Hourly: fresh model lists, the weekly digest, the daily find, the update check.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4) { [weak self] in self?.hourly() }
+        let t = Timer(timeInterval: 3600, repeats: true) { [weak self] _ in self?.hourly() }
+        RunLoop.main.add(t, forMode: .common)
+        tick = t
+    }
+
+    func registerHotkeys() {
+        Hotkeys.register(page: { [weak self] in self?.capturePage(fromBoard: false) },
+                         quick: { [weak self] in self?.quick.toggle() })
+    }
+
+    func hourly() {
+        guard !Store.shared.demo else { return }
+        if AI.modelsStale { AI.refreshModels { [weak self] _ in self?.board.push() } }
+        if let (title, body) = Digest.dueNote() { Notify.shared.post(title, body) }
+        if Settings.autoFind, AI.ready, Date().timeIntervalSince(Settings.lastFind ?? .distantPast) > 22 * 3600 {
+            findChallenges(background: true)
+        }
+        Updates.check { [weak self] in
+            self?.board.push()
+            if let l = Updates.latest, Settings.toldUpdate != l.version {
+                Settings.toldUpdate = l.version
+                Notify.shared.post("\(Edition.name) \(l.version) is out", "You have \(Updates.current). Click to see what's new.",
+                                   open: "forge.open(\(Board.js(l.url)))")
+            }
+        }
     }
 
     func updateTitle() {
         let count = Store.shared.ideas.filter { $0.pending }.count
-        item.button?.title = Settings.showCount && count > 0 ? "\(Edition.symbol) \(count)" : Edition.symbol
+        let base = Settings.showCount && count > 0 ? "\(Edition.symbol) \(count)" : Edition.symbol
+        item.button?.title = working > 0 ? base + " …" : base
+    }
+
+    // MARK: Background AI jobs (the board doesn't need to be open)
+
+    /// 📎 Reads the page you're on, asks the AI for challenges and ideas in it, and adds them to the
+    /// ✨ Suggested tray. From the hotkey or menu, the result comes back as a notification.
+    func capturePage(fromBoard: Bool) {
+        func fail(_ msg: String) {
+            if fromBoard { board.run("forge.pageRead(null, \(Board.js(msg)), false)") }
+            else { NSSound.beep(); Notify.shared.post("📎 Couldn't capture the page", msg) }
+        }
+        guard Settings.pageReading else { fail("Page reading is off. Turn it on in Settings first."); return }
+        if let why = AI.problem() { fail(why); return }
+        switch PageReader.read() {
+        case .failure(let e): fail(e.localizedDescription)
+        case .success(let page):
+            working += 1
+            if !fromBoard { Notify.shared.post("📎 Reading the page…", page.title.isEmpty ? page.app : page.title) }
+            let started = Date()
+            PageReader.fetchText(page) { page in
+                AI.readPage(page) { r in
+                    self.working -= 1
+                    let bg = !fromBoard || !self.board.visible
+                    let src: [String: Any] = ["url": page.url, "title": page.title, "app": page.app,
+                                              "secs": Int(Date().timeIntervalSince(started))]
+                    var payload = src
+                    switch r {
+                    case .success(let s):
+                        payload["result"] = s
+                        self.board.ensure(then: "forge.pageRead(\(Board.json(payload)), null, \(bg))")
+                    case .failure(let e):
+                        if fromBoard { self.board.run("forge.pageRead(null, \(Board.js(e.localizedDescription)), false)") }
+                        else { Notify.shared.post("📎 Couldn't read the page", e.localizedDescription) }
+                    }
+                }
+            }
+        }
+    }
+
+    /// 🔍 Looks through local signals (and, in an edition with tools, its connected systems) for recurring
+    /// problems, and adds them as suggested challenges.
+    func findChallenges(background: Bool) {
+        if let why = AI.problem() {
+            if background { return }
+            board.run("forge.found(null, \(Board.js(why)), false)"); return
+        }
+        working += 1
+        Settings.lastFind = Date()
+        Signals.collect { signals in
+            AI.find(signals: signals) { r in
+                self.working -= 1
+                let bg = background || !self.board.visible
+                switch r {
+                case .success(let s): self.board.ensure(then: "forge.found(\(Board.json(s)), null, \(bg))")
+                case .failure(let e):
+                    if bg { if !background { Notify.shared.post("🔍 Find challenges didn't finish", e.localizedDescription) } }
+                    else { self.board.run("forge.found(null, \(Board.js(e.localizedDescription)), false)") }
+                }
+            }
+        }
     }
 
     // MARK: Menu
 
     func menuNeedsUpdate(_ menu: NSMenu) {
         menu.removeAllItems()
-        let ideas = Store.shared.ideas
+        let store = Store.shared
+        let ideas = store.ideas
+        if let l = Updates.latest { menu.addItem(action("⬆️  Update to \(Edition.name) \(l.version)…", #selector(openUpdate))); menu.addItem(.separator()) }
         menu.addItem(action("Open Board", #selector(openBoard), "b"))
         menu.addItem(action("Capture a Thought…", #selector(capture), "n"))
+        let page = action("📎  Capture This Page", #selector(capturePageMenu))
+        let qc = action("Quick Capture…", #selector(quickCapture))
+        if !Hotkeys.label.isEmpty {
+            let mods: NSEvent.ModifierFlags = Hotkeys.label.contains("⇧") ? [.control, .option, .shift] : [.control, .option]
+            page.keyEquivalent = "i"; page.keyEquivalentModifierMask = mods
+            qc.keyEquivalent = "n"; qc.keyEquivalentModifierMask = mods
+        }
+        if Settings.pageReading { menu.addItem(page) }
+        menu.addItem(qc)
         menu.addItem(action("Add Clipboard as Idea", #selector(captureClipboard)))
         menu.addItem(.separator())
 
@@ -512,8 +548,14 @@ final class App: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
             if next.count > 7 { menu.addItem(info("+ \(next.count - 7) more on the board")) }
         }
+        let open = store.challenges.filter { $0.stage == "open" }.count
+        let tray = ideas.filter { $0.stage == "suggested" }.count + store.challenges.filter { $0.stage == "suggested" }.count
+        if open > 0 || tray > 0 { menu.addItem(.separator()) }
+        if open > 0 { menu.addItem(action("🧗  \(open) open challenge\(open == 1 ? "" : "s")", #selector(openChallenges))) }
+        if tray > 0 { menu.addItem(action("✨  \(tray) suggestion\(tray == 1 ? "" : "s") to review", #selector(openTray))) }
         menu.addItem(.separator())
-        if Edition.claudeTools && !next.isEmpty { menu.addItem(action("🎯 What Should I Build Next?", #selector(whatNext))) }
+        if !next.isEmpty { menu.addItem(action("🎯  What Should I Build Next?", #selector(whatNext))) }
+        menu.addItem(action(working > 0 ? "🔍  Finding challenges…" : "🔍  Find Challenges", #selector(findMenu)))
         menu.addItem(action("Copy Pending Checklist", #selector(copyChecklist)))
         menu.addItem(settingsItem())
         menu.addItem(action("Help & Source on \(Edition.repoLabel)", #selector(openHelp)))
@@ -524,9 +566,24 @@ final class App: NSObject, NSApplicationDelegate, NSMenuDelegate {
     func settingsItem() -> NSMenuItem {
         let it = NSMenuItem(title: "Settings", action: nil, keyEquivalent: "")
         let m = NSMenu()
-        m.addItem(groupHeader("Shaping"))
-        m.addItem(switchRow("Shape new thoughts with Claude", Settings.autoShape, #selector(switchShape(_:))))
-        m.addItem(segmentRow("Claude model", Edition.models.map { App.short($0.1) }, Edition.models.firstIndex { $0.0 == Settings.model } ?? 0, #selector(segModel(_:))))
+        let p = AI.current
+        m.addItem(groupHeader("AI"))
+        m.addItem(info("\(p.name.components(separatedBy: " · ")[0]) · \(AI.runModel(p))" + (AI.ready ? "" : "  ⚠️")))
+        if p.id == "claude-code" && Edition.models.count <= 4 {
+            m.addItem(segmentRow("Claude model", Edition.models.map { App.short($0.1) }, Edition.models.firstIndex { $0.0 == Settings.model } ?? 0, #selector(segModel(_:))))
+        }
+        m.addItem(action("AI & Models…", #selector(openAISettings)))
+        m.addItem(.separator())
+        m.addItem(groupHeader("Automation"))
+        m.addItem(switchRow("Shape new thoughts", Settings.autoShape, #selector(switchShape(_:))))
+        m.addItem(switchRow("Suggest ideas for challenges", Settings.autoSpark, #selector(switchSpark(_:))))
+        m.addItem(switchRow("Find challenges daily", Settings.autoFind, #selector(switchFind(_:))))
+        m.addItem(switchRow("Weekly digest", Settings.digest, #selector(switchDigest(_:))))
+        if Edition.pageReading {
+            m.addItem(switchRow("📎 Read pages · \(Edition.toolsLabel)", Settings.pageReading, #selector(switchPages(_:))))
+        }
+        let keys = Hotkeys.label.isEmpty ? (Settings.hotkeyShift ? "⌃⌥⇧" : "⌃⌥") : Hotkeys.label
+        m.addItem(switchRow(Settings.pageReading ? "Hotkeys \(keys)I · N" : "Hotkey \(keys)N", Settings.hotkeys, #selector(switchHotkeys(_:))))
         m.addItem(.separator())
         m.addItem(groupHeader("General"))
         m.addItem(switchRow("Show pending count", Settings.showCount, #selector(switchCount(_:))))
@@ -589,6 +646,17 @@ final class App: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     @objc func switchShape(_ s: NSSwitch) { Settings.autoShape = s.state == .on; board.push() }
+    @objc func switchSpark(_ s: NSSwitch) { Settings.autoSpark = s.state == .on; board.push() }
+    @objc func switchFind(_ s: NSSwitch) { Settings.autoFind = s.state == .on; board.push() }
+    @objc func switchDigest(_ s: NSSwitch) { Settings.digest = s.state == .on; board.push() }
+    @objc func switchPages(_ s: NSSwitch) { setPageReading(s.state == .on) }
+    func setPageReading(_ on: Bool) {
+        Settings.pageReading = on
+        if on { PageReader.start() } else { PageReader.stop() }
+        registerHotkeys()
+        board.push()
+    }
+    @objc func switchHotkeys(_ s: NSSwitch) { Settings.hotkeys = s.state == .on; registerHotkeys(); board.push() }
     @objc func switchCount(_ s: NSSwitch) { Settings.showCount = s.state == .on; updateTitle() }
     @objc func switchLogin(_ s: NSSwitch) {
         toggleLogin()
@@ -623,6 +691,8 @@ final class App: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     @objc func openBoard() { board.show() }
     @objc func capture() { board.show(then: "forge.focusCapture()") }
+    @objc func capturePageMenu() { capturePage(fromBoard: false) }
+    @objc func quickCapture() { quick.toggle() }
     @objc func openIdea(_ s: NSMenuItem) {
         guard let id = s.representedObject as? String else { return }
         board.show(then: "forge.openCard(\(Board.js(id)))")
@@ -632,7 +702,12 @@ final class App: NSObject, NSApplicationDelegate, NSMenuDelegate {
         guard !text.isEmpty else { NSSound.beep(); return }
         board.show(then: "forge.capture(\(Board.js(text)))")
     }
+    @objc func openChallenges() { board.show(then: "forge.tab('challenges')") }
+    @objc func openTray() { board.show(then: "forge.showTray()") }
+    @objc func openAISettings() { board.show(then: "forge.openSettings()") }
+    @objc func openUpdate() { if let l = Updates.latest, let u = URL(string: l.url) { NSWorkspace.shared.open(u) } }
     @objc func whatNext() { board.show(then: "forge.whatNext()") }
+    @objc func findMenu() { if working == 0 { findChallenges(background: false); board.show(then: "forge.tab('challenges')") } }
     @objc func copyChecklist() { Board.copy(Store.shared.checklist) }
     @objc func openHelp() { NSWorkspace.shared.open(URL(string: Edition.repoURL + "#readme")!) }
     @objc func revealFile() { NSWorkspace.shared.activateFileViewerSelecting([Store.shared.file]) }
@@ -677,10 +752,14 @@ final class Board: NSObject, NSWindowDelegate, WKNavigationDelegate, WKScriptMes
     var web: WKWebView?
     var ready = false
     var queued: [String] = []
+    var visible: Bool { window?.isVisible ?? false }
 
     static func js(_ s: String) -> String {
         let d = (try? JSONSerialization.data(withJSONObject: [s])) ?? Data("[\"\"]".utf8)
         return String(decoding: d, as: UTF8.self) + "[0]"
+    }
+    static func json(_ o: Any) -> String {
+        String(decoding: (try? JSONSerialization.data(withJSONObject: o)) ?? Data("null".utf8), as: UTF8.self)
     }
 
     static func copy(_ s: String) {
@@ -688,7 +767,8 @@ final class Board: NSObject, NSWindowDelegate, WKNavigationDelegate, WKScriptMes
         NSPasteboard.general.setString(s, forType: .string)
     }
 
-    func show(then script: String? = nil) {
+    /// Loads the board without showing it, so background captures can add to it.
+    func ensure(then script: String? = nil) {
         if window == nil {
             let cfg = WKWebViewConfiguration()
             cfg.userContentController.add(self, name: "forge")
@@ -729,6 +809,10 @@ final class Board: NSObject, NSWindowDelegate, WKNavigationDelegate, WKScriptMes
             }
         }
         if let s = script { run(s) }
+    }
+
+    func show(then script: String? = nil) {
+        ensure(then: script)
         NSApp.setActivationPolicy(.regular)   // Dock icon + ⌘-Tab while the window is open
         NSApp.activate(ignoringOtherApps: true)
         window?.makeKeyAndOrderFront(nil)
@@ -738,30 +822,47 @@ final class Board: NSObject, NSWindowDelegate, WKNavigationDelegate, WKScriptMes
         if ready { web?.evaluateJavaScript(s, completionHandler: nil) } else { queued.append(s) }
     }
 
-    /// Sends the whole state to the page: ideas, your apps, settings.
+    /// Sends the whole state to the page: ideas and challenges, your apps, the AI, settings.
     func push() {
         guard web != nil else { return }
-        let ideas = (try? JSONSerialization.jsonObject(with: Store.shared.data)) ?? ["version": 1, "ideas": []]
+        let store = Store.shared
+        let ideas = (try? JSONSerialization.jsonObject(with: store.data)) ?? ["version": 1, "ideas": [], "challenges": []]
         let state: [String: Any] = [
             "doc": ideas,
             "apps": Fleet.apps(),
-            "people": Edition.people(),
-            "claude": Claude.available,
-            "edition": ["name": Edition.name, "symbol": Edition.symbol, "flavor": Edition.flavor, "claudeTools": Edition.claudeTools,
-                        "repo": Edition.repoURL, "repoLabel": Edition.repoLabel,
-                        "models": Edition.models.map { [$0.0, $0.1] }, "appearances": Edition.appearances.map { [$0.0, $0.1] }],
-            "demo": Store.shared.demo,
-            "file": Store.shared.file.path.replacingOccurrences(of: NSHomeDirectory(), with: "~"),
-            "settings": ["appearance": Settings.appearance, "model": Settings.model, "autoShape": Settings.autoShape,
+            "people": Settings.allPeople,
+            "ai": AI.state(),
+            "updates": Updates.state(),
+            "hotkeys": Hotkeys.label,
+            "edition": ["name": Edition.name, "symbol": Edition.symbol, "flavor": Edition.flavor,
+                        "repo": Edition.repoURL, "repoLabel": Edition.repoLabel, "tools": Edition.toolsLabel,
+                        "dataFolder": Edition.dataFolderChoice, "pageReading": Edition.pageReading, "appearances": Edition.appearances.map { [$0.0, $0.1] }],
+            "demo": store.demo,
+            "file": store.file.path.replacingOccurrences(of: NSHomeDirectory(), with: "~"),
+            "customFolder": Settings.dataDir != nil,
+            "settings": ["appearance": Settings.appearance, "autoShape": Settings.autoShape, "autoSpark": Settings.autoSpark,
+                         "autoFind": Settings.autoFind, "digest": Settings.digest, "hotkeys": Settings.hotkeys,
+                         "hotkeyShift": Settings.hotkeyShift, "people": Settings.people, "pageReading": Settings.pageReading,
+                         "lastFind": Settings.lastFind.map { ISO8601DateFormatter().string(from: $0) } ?? "",
                          "showCount": Settings.showCount, "login": SMAppService.mainApp.status == .enabled],
-            "version": Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "",
+            "version": Updates.current,
         ]
-        guard let d = try? JSONSerialization.data(withJSONObject: state) else { return }
-        web?.evaluateJavaScript("forge.load(\(String(decoding: d, as: UTF8.self)))", completionHandler: nil)
+        web?.evaluateJavaScript("forge.load(\(Board.json(state)))", completionHandler: nil)
+    }
+
+    /// Runs an AI call and hands the result to `forge.<fn>(<id>, result, error)`.
+    private func reply(_ fn: String, _ id: String?, _ r: Result<Any, Error>) {
+        let head = id.map { Board.js($0) + ", " } ?? ""
+        switch r {
+        case .success(let v): run("forge.\(fn)(\(head)\(Board.json(v)), null)")
+        case .failure(let e): run("forge.\(fn)(\(head)null, \(Board.js(e.localizedDescription)))")
+        }
     }
 
     func userContentController(_ c: WKUserContentController, didReceive m: WKScriptMessage) {
         guard let msg = m.body as? [String: Any], let cmd = msg["cmd"] as? String else { return }
+        let app = NSApp.delegate as? App
+        let id = msg["id"] as? String
         switch cmd {
         case "ready":
             ready = true
@@ -771,60 +872,97 @@ final class Board: NSObject, NSWindowDelegate, WKNavigationDelegate, WKScriptMes
         case "save":
             guard let doc = msg["doc"], let d = try? JSONSerialization.data(withJSONObject: doc, options: [.prettyPrinted, .sortedKeys]) else { return }
             Store.shared.save(d)
-            (NSApp.delegate as? App)?.updateTitle()
+            app?.updateTitle()
             NexusBeacon.beat()
         case "shape":
-            guard let id = msg["id"] as? String, let text = msg["text"] as? String else { return }
-            let single = msg["single"] as? Bool ?? false
-            Claude.shape(text, id: id, single: single) { [weak self] r in
-                switch r {
-                case .success(let cards):
-                    let d = (try? JSONSerialization.data(withJSONObject: cards)) ?? Data("[]".utf8)
-                    self?.run("forge.shaped(\(Board.js(id)), \(String(decoding: d, as: UTF8.self)), null)")
-                case .failure(let e):
-                    self?.run("forge.shaped(\(Board.js(id)), null, \(Board.js(e.localizedDescription)))")
-                }
-            }
+            guard let id, let text = msg["text"] as? String else { return }
+            AI.shape(text, id: id, single: msg["single"] as? Bool ?? false) { [weak self] r in self?.reply("shaped", id, r.map { $0 }) }
+        case "shapeChallenge":
+            guard let id, let text = msg["text"] as? String else { return }
+            AI.shapeChallenge(text, id: id) { [weak self] r in self?.reply("challengeShaped", id, r.map { $0 }) }
+        case "spark":
+            guard let id, let text = msg["text"] as? String else { return }
+            AI.spark(text) { [weak self] r in self?.reply("sparked", id, r.map { $0 }) }
         case "ask":
-            guard let id = msg["id"] as? String, let brief = msg["brief"] as? String, let q = msg["q"] as? String else { return }
-            Claude.ask(brief: brief, question: q, id: id) { [weak self] r in
-                switch r {
-                case .success(let s):
-                    let d = (try? JSONSerialization.data(withJSONObject: s)) ?? Data("{}".utf8)
-                    self?.run("forge.answered(\(Board.js(id)), \(String(decoding: d, as: UTF8.self)), null)")
-                case .failure(let e):
-                    self?.run("forge.answered(\(Board.js(id)), null, \(Board.js(e.localizedDescription)))")
-                }
-            }
+            guard let id, let brief = msg["brief"] as? String, let q = msg["q"] as? String else { return }
+            AI.ask(brief: brief, question: q, id: id) { [weak self] r in self?.reply("answered", id, r.map { $0 }) }
         case "next":
             guard let board = msg["board"] as? String else { return }
-            Claude.whatNext(board) { [weak self] r in
-                switch r {
-                case .success(let s):
-                    let d = (try? JSONSerialization.data(withJSONObject: s)) ?? Data("{}".utf8)
-                    self?.run("forge.nextPicks(\(String(decoding: d, as: UTF8.self)), null)")
-                case .failure(let e):
-                    self?.run("forge.nextPicks(null, \(Board.js(e.localizedDescription)))")
-                }
-            }
+            AI.whatNext(board) { [weak self] r in self?.reply("nextPicks", nil, r.map { $0 }) }
+        case "place":
+            guard let list = msg["list"] as? String else { return }
+            AI.place(list) { [weak self] r in self?.reply("placed", nil, r.map { $0 }) }
+        case "capturePage":
+            app?.capturePage(fromBoard: true)
+        case "findChallenges":
+            app?.findChallenges(background: false)
         case "build":
             guard let brief = msg["brief"] as? String, let n = msg["n"] as? Int else { return }
-            let ok = Claude.build(brief: brief, app: msg["app"] as? String ?? "", number: n)
+            let ok = AI.build(brief: brief, app: msg["app"] as? String ?? "", number: n, tool: msg["tool"] as? String ?? "claude")
             run("forge.built(\(ok))")
         case "copy":
             if let t = msg["text"] as? String { Board.copy(t) }
+        case "notify":
+            Notify.shared.post(msg["title"] as? String ?? Edition.name, msg["body"] as? String ?? "", open: msg["open"] as? String ?? "")
+        case "ai":
+            // Provider, model, server address and keys.
+            let p = AI.all.first { $0.id == (msg["provider"] as? String ?? AI.current.id) } ?? AI.current
+            switch msg["key"] as? String ?? "" {
+            case "provider":
+                AI.setProvider(p.id)
+                if AI.modelsStale { AI.refreshModels { [weak self] _ in self?.push() } }
+            case "model": if let v = msg["value"] as? String { AI.setModel(v, for: p) }
+            case "base":
+                AI.setBase(msg["value"] as? String ?? "", for: p)
+                AI.refreshModels(p) { [weak self] _ in self?.push() }
+            case "apiKey":
+                AI.setKey(msg["value"] as? String, for: p)
+                if AI.hasKey(p) { AI.refreshModels(p) { [weak self] _ in self?.push() } }
+            case "refresh":
+                AI.refreshModels(p) { [weak self] err in
+                    self?.push()
+                    self?.run("forge.toast(\(Board.js(err.map { "↻ " + $0 } ?? "↻ Model list updated")))")
+                }
+            case "test":
+                AI.test { [weak self] ok, text in self?.run("forge.tested(\(ok), \(Board.js(text)))") }
+                return
+            default: break
+            }
+            push()
         case "setting":
             guard let k = msg["key"] as? String else { return }
-            let app = NSApp.delegate as? App
+            let v = msg["value"]
             switch k {
-            case "appearance": if let v = msg["value"] as? String { Settings.appearance = v; Settings.applyAppearance() }
-            case "model": if let v = msg["value"] as? String { Settings.model = v; Edition.modelChanged() }
-            case "autoShape": if let v = msg["value"] as? Bool { Settings.autoShape = v }
-            case "showCount": if let v = msg["value"] as? Bool { Settings.showCount = v; app?.updateTitle() }
+            case "appearance": if let v = v as? String { Settings.appearance = v; Settings.applyAppearance() }
+            case "model": if let v = v as? String { Settings.model = v; Edition.modelChanged() }
+            case "autoShape": if let v = v as? Bool { Settings.autoShape = v }
+            case "autoSpark": if let v = v as? Bool { Settings.autoSpark = v }
+            case "autoFind": if let v = v as? Bool { Settings.autoFind = v }
+            case "digest": if let v = v as? Bool { Settings.digest = v }
+            case "pageReading": if let v = v as? Bool { app?.setPageReading(v); return }
+            case "hotkeys": if let v = v as? Bool { Settings.hotkeys = v; app?.registerHotkeys() }
+            case "hotkeyShift": if let v = v as? Bool { Settings.hotkeyShift = v; app?.registerHotkeys() }
+            case "people": if let v = v as? [String] { Settings.people = v.map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty } }
+            case "showCount": if let v = v as? Bool { Settings.showCount = v; app?.updateTitle() }
             case "login": app?.toggleLogin()
             default: break
             }
             push()
+        case "chooseFolder":
+            guard Edition.dataFolderChoice else { return }
+            if msg["reset"] as? Bool == true { Store.shared.move(to: nil); return }
+            let panel = NSOpenPanel()
+            panel.canChooseDirectories = true; panel.canChooseFiles = false; panel.canCreateDirectories = true
+            panel.prompt = "Use This Folder"
+            panel.message = "Pick a folder for ideas.json — for example in iCloud Drive or Dropbox, to sync it between Macs."
+            panel.beginSheetModal(for: window!) { r in
+                if r == .OK, let u = panel.url { Store.shared.move(to: u) }
+            }
+        case "checkUpdate":
+            Updates.check(force: true) { [weak self] in
+                self?.push()
+                self?.run("forge.toast(\(Board.js(Updates.latest.map { "⬆️ \($0.version) is out" } ?? (Updates.error.isEmpty ? "✓ You have the latest version" : Updates.error))))")
+            }
         case "reveal":
             NSWorkspace.shared.activateFileViewerSelecting([Store.shared.file])
         case "open":

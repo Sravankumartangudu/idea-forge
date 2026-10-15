@@ -4,7 +4,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 APP="IdeaForge.app"
-VERSION="1.0.0"
+VERSION="1.1.0"
 ARCHS="$(uname -m)"
 [[ "${1:-}" == "--universal" ]] && ARCHS="arm64 x86_64"
 
@@ -14,11 +14,12 @@ ARCHS="$(uname -m)"
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 
-SRC="main.swift Edition.swift NexusBeacon.swift"
+SRC="main.swift AI.swift Extras.swift Edition.swift NexusBeacon.swift"
 BINS=()
 for arch in $ARCHS; do
   swiftc -O -target "$arch-apple-macos13.0" \
     -framework AppKit -framework WebKit -framework ServiceManagement \
+    -framework Security -framework Carbon -framework UserNotifications \
     $SRC -o "$APP/Contents/MacOS/IdeaForge-$arch"
   BINS+=("$APP/Contents/MacOS/IdeaForge-$arch")
 done
