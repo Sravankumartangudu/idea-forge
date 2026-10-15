@@ -1,0 +1,324 @@
+{
+  "version": 1,
+  "ideas": [
+    {
+      "n": 1,
+      "status": "inbox",
+      "title": "",
+      "raw": "something that reminds me to stretch every hour but only when i've been typing nonstop",
+      "type": "",
+      "home": "",
+      "app": "",
+      "priority": "med",
+      "steps": [],
+      "helpers": [],
+      "tags": [],
+      "summary": "",
+      "why": "",
+      "id": "demo1",
+      "created": "2026-10-01T09:00:00Z",
+      "updated": "2026-10-01T09:00:00Z",
+      "order": 0
+    },
+    {
+      "n": 2,
+      "status": "inbox",
+      "title": "Add a weekly summary email to Water Tracker",
+      "raw": "weekly summary email for the water app",
+      "summary": "Send a short Sunday email with the week's drinking streak and best day.",
+      "why": "A weekly nudge keeps the habit going without daily noise.",
+      "type": "enhancement",
+      "home": "personal",
+      "app": "Water Tracker",
+      "priority": "low",
+      "steps": [
+        {
+          "t": "Collect the week's totals",
+          "done": false
+        },
+        {
+          "t": "Design a one-screen email",
+          "done": false
+        },
+        {
+          "t": "Add a Sunday schedule setting",
+          "done": false
+        }
+      ],
+      "helpers": [],
+      "tags": [
+        "email",
+        "habits"
+      ],
+      "id": "demo2",
+      "created": "2026-10-02T09:00:00Z",
+      "updated": "2026-10-02T09:00:00Z",
+      "order": 1
+    },
+    {
+      "n": 3,
+      "status": "shaped",
+      "title": "Build a receipt scanner agent",
+      "raw": "snap receipts and it files them by month + category, export csv at tax time",
+      "summary": "Takes a photo of a receipt, reads the shop, date and total, and files it by month and category. Exports a CSV at tax time.",
+      "why": "Tax season stops being a shoebox hunt.",
+      "type": "agent",
+      "home": "personal",
+      "app": "",
+      "priority": "high",
+      "steps": [
+        {
+          "t": "Read text from a photo with Vision",
+          "done": false
+        },
+        {
+          "t": "Pull out shop, date and total",
+          "done": false
+        },
+        {
+          "t": "Sort into month and category folders",
+          "done": false
+        },
+        {
+          "t": "Export a CSV for a chosen year",
+          "done": false
+        }
+      ],
+      "helpers": [
+        "Priya",
+        "Sam"
+      ],
+      "tags": [
+        "finance",
+        "ocr"
+      ],
+      "id": "demo3",
+      "created": "2026-10-03T09:00:00Z",
+      "updated": "2026-10-03T09:00:00Z",
+      "order": 2
+    },
+    {
+      "n": 4,
+      "status": "shaped",
+      "title": "Let Focus Timer sync with the calendar",
+      "raw": "focus timer should skip meetings automatically",
+      "summary": "Pauses focus sessions during calendar meetings and resumes after.",
+      "why": "No more timer alarms going off in the middle of a call.",
+      "type": "enhancement",
+      "home": "personal",
+      "app": "Focus Timer",
+      "priority": "med",
+      "steps": [
+        {
+          "t": "Read today's events with EventKit",
+          "done": true
+        },
+        {
+          "t": "Pause when a meeting starts",
+          "done": false
+        },
+        {
+          "t": "Resume and show time left",
+          "done": false
+        }
+      ],
+      "helpers": [
+        "Alex"
+      ],
+      "tags": [
+        "calendar"
+      ],
+      "id": "demo4",
+      "created": "2026-10-04T09:00:00Z",
+      "updated": "2026-10-04T09:00:00Z",
+      "order": 3
+    },
+    {
+      "n": 5,
+      "status": "shaped",
+      "title": "Fix the menu icon blurring on external screens",
+      "raw": "menu bar icon looks blurry on my second monitor",
+      "summary": "The menu-bar icon is drawn at one size and looks soft on non-Retina displays.",
+      "why": "Small, but it is the first thing you see.",
+      "type": "fix",
+      "home": "personal",
+      "app": "Focus Timer",
+      "priority": "med",
+      "steps": [
+        {
+          "t": "Ship 1x and 2x icon sizes",
+          "done": false
+        },
+        {
+          "t": "Mark the image as a template",
+          "done": false
+        }
+      ],
+      "helpers": [],
+      "tags": [
+        "ui"
+      ],
+      "id": "demo5",
+      "created": "2026-10-05T09:00:00Z",
+      "updated": "2026-10-05T09:00:00Z",
+      "order": 4
+    },
+    {
+      "n": 6,
+      "status": "building",
+      "title": "Build a plant watering buddy",
+      "raw": "tell me which plant needs water based on last watered + plant type",
+      "summary": "Keeps a list of your plants and nudges you when each one is due for water, based on its type.",
+      "why": "Fewer sad, crispy plants.",
+      "type": "agent",
+      "home": "personal",
+      "app": "",
+      "priority": "med",
+      "steps": [
+        {
+          "t": "Plant list with type and last watered",
+          "done": true
+        },
+        {
+          "t": "Watering rules per plant type",
+          "done": true
+        },
+        {
+          "t": "Morning reminder with who is due",
+          "done": false
+        },
+        {
+          "t": "One-tap 'watered' from the menu",
+          "done": false
+        }
+      ],
+      "helpers": [
+        "Jordan"
+      ],
+      "tags": [
+        "home"
+      ],
+      "id": "demo6",
+      "created": "2026-10-06T09:00:00Z",
+      "updated": "2026-10-06T09:00:00Z",
+      "order": 5
+    },
+    {
+      "n": 7,
+      "status": "building",
+      "title": "Add dark mode to Recipe Box",
+      "raw": "recipe box needs dark mode",
+      "summary": "A System / Light / Dark setting for Recipe Box, following macOS by default.",
+      "why": "Cooking at night shouldn't be blinding.",
+      "type": "enhancement",
+      "home": "personal",
+      "app": "Recipe Box",
+      "priority": "high",
+      "steps": [
+        {
+          "t": "Move colours to variables",
+          "done": true
+        },
+        {
+          "t": "Add the Appearance setting",
+          "done": true
+        },
+        {
+          "t": "Check every screen in dark",
+          "done": false
+        }
+      ],
+      "helpers": [],
+      "tags": [
+        "ui"
+      ],
+      "id": "demo7",
+      "created": "2026-10-07T09:00:00Z",
+      "updated": "2026-10-07T09:00:00Z",
+      "order": 6
+    },
+    {
+      "n": 8,
+      "status": "shipped",
+      "title": "Add CSV export to Habit Grid",
+      "raw": "export habits csv",
+      "summary": "Exports every habit check-in as a CSV file.",
+      "why": "Your data, in a spreadsheet, whenever you want.",
+      "type": "enhancement",
+      "home": "personal",
+      "app": "Habit Grid",
+      "priority": "med",
+      "steps": [
+        {
+          "t": "Write the CSV",
+          "done": true
+        },
+        {
+          "t": "Add Export… to the menu",
+          "done": true
+        }
+      ],
+      "helpers": [],
+      "tags": [
+        "export"
+      ],
+      "shippedAt": "2026-10-09T18:00:00Z",
+      "id": "demo8",
+      "created": "2026-10-08T09:00:00Z",
+      "updated": "2026-10-08T09:00:00Z",
+      "order": 7
+    },
+    {
+      "n": 9,
+      "status": "shipped",
+      "title": "Clean up old build folders",
+      "raw": "delete old dist folders eating disk",
+      "summary": "Remove stale build output across projects.",
+      "why": "Frees a few gigabytes.",
+      "type": "chore",
+      "home": "local",
+      "app": "",
+      "priority": "low",
+      "steps": [
+        {
+          "t": "List dist folders over 30 days old",
+          "done": true
+        },
+        {
+          "t": "Delete them",
+          "done": true
+        }
+      ],
+      "helpers": [],
+      "tags": [
+        "disk"
+      ],
+      "shippedAt": "2026-10-07T12:00:00Z",
+      "id": "demo9",
+      "created": "2026-10-09T09:00:00Z",
+      "updated": "2026-10-09T09:00:00Z",
+      "order": 8
+    },
+    {
+      "n": 10,
+      "status": "parked",
+      "title": "Try a voice capture shortcut",
+      "raw": "maybe hold a key and talk to add an idea?",
+      "summary": "Hold a hotkey, speak, and the words become a new idea.",
+      "why": "Ideas arrive when your hands are busy.",
+      "type": "enhancement",
+      "home": "personal",
+      "app": "Idea Forge",
+      "priority": "low",
+      "steps": [],
+      "helpers": [],
+      "tags": [
+        "voice"
+      ],
+      "id": "demo10",
+      "created": "2026-10-01T09:00:00Z",
+      "updated": "2026-10-01T09:00:00Z",
+      "order": 9
+    }
+  ]
+}
