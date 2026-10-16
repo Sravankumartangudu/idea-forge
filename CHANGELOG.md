@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.3.0 — 2026-10-17
+
+- ⚡ **Auto-build no longer means shipped.** A finished build stays in Building, marked **✅ Built · not
+  deployed**, instead of jumping to Shipped. Cards an earlier version moved to Shipped go back to Building
+  until they're really installed.
+- **Deploy tracker**: built cards show where the change has got to: **Built › Committed › Pushed › Released ›
+  Installed**. It's read from the app folder's git, its tags and the installed app, and checked again every
+  minute. Projects without a remote, tags or an app skip those steps.
+- 🚀 **Deploy** (click twice to confirm): Claude Code commits, pushes, tags, releases and installs the change
+  the way that project ships, following its README, changelog and scripts and the git name and host the repo already uses. It stages files by name,
+  checks the remote's tags before tagging, and can't force-push, rewrite history or delete. Each deploy
+  stops at $5 or 45 minutes, and **⏹ Stop deploy** stops it.
+- Once the installed app has the change, the card moves to Shipped by itself. Shipping it yourself works
+  too: the tracker follows along either way.
+
 ## 1.2.1 — 2026-10-17
 
 - Starting a build (⚡ Auto-build, or 🚀 Claude Code / Codex) now closes the card, so you see it land in

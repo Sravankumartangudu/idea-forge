@@ -928,6 +928,37 @@ final class Board: NSObject, NSWindowDelegate, WKNavigationDelegate, WKScriptMes
             case .failure(let e):
                 run("forge.autoStarted(\(Board.js(id)), \(Board.js(e.localizedDescription)), null)")
             }
+        case "deploy":
+            // 🚀 Deploy: Claude ships what Auto-build made (commit, push, release, install), in the background.
+            guard let id, let dir = msg["dir"] as? String, let n = msg["n"] as? Int else { return }
+            let r = AutoBuild.deploy(id: id, n: n, dir: dir, summary: msg["summary"] as? String ?? "", files: msg["files"] as? [String] ?? [],
+                progress: { [weak self] line in
+                    guard let self, self.ready else { return }
+                    self.run("forge.autoProgress(\(Board.js(id)), \(Board.js(line)))")
+                },
+                done: { [weak self] result in
+                    guard let self else { return }
+                    app?.working -= 1
+                    self.ensure(then: "forge.deployed(\(Board.js(id)), \(Board.json(result)), \(!self.visible))")
+                })
+            switch r {
+            case .success: app?.working += 1
+            case .failure(let e): run("forge.deployed(\(Board.js(id)), \(Board.json(["ok": false, "refused": true, "error": e.localizedDescription])), false)")
+            }
+        case "track":
+            // Where each auto-built change has got to: committed, pushed, released, installed.
+            let items = msg["items"] as? [[String: Any]] ?? []
+            let iso = ISO8601DateFormatter()
+            iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            DispatchQueue.global(qos: .utility).async { [weak self] in
+                var out: [String: Any] = [:]
+                for it in items {
+                    guard let id = it["id"] as? String, let dir = it["dir"] as? String,
+                          let since = iso.date(from: it["since"] as? String ?? "") else { continue }
+                    out[id] = AutoBuild.track(dir: dir, since: since, files: it["files"] as? [String] ?? [])
+                }
+                DispatchQueue.main.async { if self?.ready == true { self?.run("forge.tracked(\(Board.json(out)))") } }
+            }
         case "autoStop":
             if let id { AutoBuild.stop(id) }
         case "autoResume":

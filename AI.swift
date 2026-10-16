@@ -808,9 +808,10 @@ enum AI {
 // MARK: - ⚡ Auto-build (Claude Code builds a card on its own, in the background)
 
 /// A headless Claude Code run in the app's folder (or a new folder in ~ for a new agent) that makes the change
-/// and gets it to build, then reports back so the card moves on by itself. It may edit files there and run the
-/// project's build, but nothing that publishes or reaches out: user settings and MCP servers are skipped,
-/// commit/push/release/install and network commands are denied, and each run has a spend cap and a time limit.
+/// and gets it to build, then reports back. It may edit files there and run the project's build, but nothing
+/// that publishes or reaches out: user settings and MCP servers are skipped, commit/push/release/install and
+/// network commands are denied, and each run has a spend cap and a time limit. Shipping it is a second run,
+/// 🚀 Deploy, started by its own click; `track` reads how far the change has got.
 enum AutoBuild {
     private final class Job {
         let process: Process, dir: String
@@ -818,7 +819,7 @@ enum AutoBuild {
         init(_ p: Process, _ dir: String) { process = p; self.dir = dir }
     }
     private static var jobs: [String: Job] = [:]
-    /// Ids of the cards building right now.
+    /// Ids of the cards building or deploying right now.
     static var running: [String] { Array(jobs.keys) }
 
     static let minutes = 45
@@ -827,10 +828,23 @@ enum AutoBuild {
                                  "git stash", "git rebase", "git merge", "git branch", "git remote", "gh", "sudo", "rm -rf",
                                  "ditto", "open", "osascript", "pkill", "killall", "launchctl", "security", "defaults",
                                  "curl", "wget", "scp", "ssh"].map { "Bash(\($0):*)" }
+    /// A deploy may commit, push, release and install, but never rewrite history, sweep in every file or delete.
+    private static let deployDenied = ["git push --force", "git push -f", "git push --delete", "git push origin --delete",
+                                       "git reset --hard", "git clean", "git rebase", "git filter-branch", "git checkout --",
+                                       "git restore", "git stash", "git add -A", "git add .", "git add --all", "git commit -a",
+                                       "git tag -d", "git remote add", "git remote set-url", "git remote remove", "git remote rm", "gh repo", "gh release delete", "gh api", "sudo", "rm -rf",
+                                       "osascript", "launchctl", "security", "defaults write", "defaults delete",
+                                       "curl", "wget", "scp", "ssh"].map { "Bash(\($0):*)" }
     private static let schema = """
     {"type":"object","required":["ok","summary","stepsDone","tryIt","files","blocker"],"properties":{
     "ok":{"type":"boolean"},"summary":{"type":"string"},"stepsDone":{"type":"array","items":{"type":"integer"}},
     "tryIt":{"type":"string"},"files":{"type":"array","items":{"type":"string"}},"blocker":{"type":"string"}}}
+    """
+    private static let deploySchema = """
+    {"type":"object","required":["ok","summary","version","tag","committed","pushed","released","installed","blocker"],"properties":{
+    "ok":{"type":"boolean"},"summary":{"type":"string"},"version":{"type":"string"},"tag":{"type":"string"},
+    "committed":{"type":"boolean"},"pushed":{"type":"boolean"},"released":{"type":"boolean"},"installed":{"type":"boolean"},
+    "blocker":{"type":"string"}}}
     """
 
     /// "Standup bot for my team!" → "StandupBotForMyTeam".
@@ -840,12 +854,13 @@ enum AutoBuild {
         return name.isEmpty ? "NewAgent" : String(name.prefix(32))
     }
 
+    private static func fail(_ s: String) -> Result<[String: String], AI.Failure> { .failure(AI.Failure(errorDescription: s)) }
+
     /// Starts building card `id`; returns its dir, folder and session, or an error. `progress` gets short lines
     /// ("Editing board.html") and `done` the result: ok, summary, stepsDone, tryIt, files, blocker (Claude's
     /// reply), plus dir, folder, fresh, session, cost, and error/stopped when it didn't finish.
     static func start(id: String, n: Int, brief: String, app: String, name: String, steps: [String], dir lastDir: String,
                       progress: @escaping (String) -> Void, done: @escaping ([String: Any]) -> Void) -> Result<[String: String], AI.Failure> {
-        func fail(_ s: String) -> Result<[String: String], AI.Failure> { .failure(AI.Failure(errorDescription: s)) }
         guard AI.claudeInstalled else { return fail("⚡ Auto-build needs Claude Code installed.") }
         guard jobs[id] == nil else { return fail("It's already building.") }
         let fm = FileManager.default, home = NSHomeDirectory()
@@ -861,8 +876,6 @@ enum AutoBuild {
                 do { try fm.createDirectory(atPath: dir, withIntermediateDirectories: true) } catch { return fail("Couldn't make ~/\(cand).") }
             }
         }
-        guard !jobs.values.contains(where: { $0.dir == dir }) else { return fail("Another card is building in that folder. Wait for it to finish.") }
-        let folder = (dir as NSString).lastPathComponent
 
         var prompt = """
         Build this idea from my \(Edition.name) board (#\(n)) on your own. Nobody is watching this run, so don't \
@@ -874,6 +887,7 @@ enum AutoBuild {
         if !steps.isEmpty {
             prompt += "\nThe card's build steps, numbered:\n" + steps.enumerated().map { "\($0.offset + 1). \($0.element)" }.joined(separator: "\n") + "\n"
         }
+        let folder = (dir as NSString).lastPathComponent
         prompt += fresh
             ? "\nIt's a new app or agent, and this folder (~/\(folder)) is its home. If one of my apps in ~ is close to it, follow how that one is laid out and built (its build.sh and README); otherwise keep it small and simple, with a build.sh."
             : "\nThe code for \(app) is in this folder (~/\(folder)). Read enough of it to fit in with how it's written, then make the change."
@@ -882,7 +896,7 @@ enum AutoBuild {
 
         Then build it the way this project builds (its build.sh, package.json scripts or tests) and fix whatever \
         breaks until it builds cleanly. Work only in this folder. Don't commit, push, tag, release, install or \
-        launch anything, and don't bump the version: I'll review the changes and ship them myself.
+        launch anything, and don't bump the version: that's a separate 🚀 Deploy step I start myself.
 
         Reply with: ok (true only when the change is made and it builds), summary (what you built, 1 to 3 \
         sentences), stepsDone (the numbers of the build steps above that are now done), tryIt (how to try it, one \
@@ -891,12 +905,72 @@ enum AutoBuild {
         """
         if !Edition.buildNote.isEmpty { prompt += "\n\n" + Edition.buildNote }
 
+        return launch(id: id, dir: dir, task: "Auto-build", log: "idea-\(n)-auto", prompt: prompt, schema: schema,
+                      tools: ["--permission-mode", "acceptEdits", "--allowedTools", "Bash", "--disallowedTools"] + denied,
+                      progress: progress) { r in
+            var r = r
+            r["fresh"] = fresh
+            done(r)
+        }
+    }
+
+    /// 🚀 Deploys what Auto-build made for card `id`: Claude commits, pushes, releases and installs it the way
+    /// the project ships. `done` gets ok, summary, version, tag, committed, pushed, released, installed, blocker,
+    /// plus dir, session, cost, and error/stopped when it didn't finish.
+    static func deploy(id: String, n: Int, dir: String, summary: String, files: [String],
+                       progress: @escaping (String) -> Void, done: @escaping ([String: Any]) -> Void) -> Result<[String: String], AI.Failure> {
+        guard AI.claudeInstalled else { return fail("🚀 Deploy needs Claude Code installed.") }
+        guard jobs[id] == nil else { return fail("It's already running.") }
+        guard FileManager.default.fileExists(atPath: dir) else { return fail("~/\((dir as NSString).lastPathComponent) isn't there any more.") }
+        var prompt = """
+        Ship the change that ⚡ Auto-build made for #\(n) on my \(Edition.name) board. I asked for this by clicking \
+        🚀 Deploy, so commit, push, release and install it now, the way this project ships. Nobody is watching \
+        this run, so don't ask me anything.
+
+        What was built: \(summary.isEmpty ? "see the uncommitted changes" : summary)
+        """
+        if !files.isEmpty { prompt += "\nFiles it changed: " + files.joined(separator: ", ") }
+        prompt += """
+
+
+        First read this project's CLAUDE.md, README and CHANGELOG, and its build, package and release scripts, \
+        and follow them, including any rules about what must never go in the repo. Look at git log and the \
+        earlier releases to see how this project ships. Then:
+        1. Bump the version where this project keeps it (minor for a new feature, patch for a fix). Add a \
+        CHANGELOG entry, and update the README where it describes what changed.
+        2. Commit with git add of explicit paths only (never git add -A or git add .). Leave out data, secrets, \
+        build output and anything git-ignored. Use the git name and email this repo's earlier commits use.
+        3. Push to the branch's upstream. Never force-push or rewrite history.
+        4. If this project tags releases: check the remote's tags first (git ls-remote --tags origin) so the new \
+        tag is unused, tag it, push the tag, and make the release with gh like the earlier ones (set GH_HOST to \
+        the origin's host; attach the DMG or zip if earlier releases have one).
+        5. If it's an app, install it the way this project installs (for example its package script, then ditto \
+        into /Applications) and relaunch it if it was running.
+        If there's no git remote, commit locally and stop there, and say so in blocker. If a step fails, stop and \
+        say what failed; don't work around it.
+
+        Reply with: ok (true when everything this project ships is done), summary (what you shipped, 1 or 2 \
+        sentences), version (the new version, or ""), tag (or ""), committed, pushed, released, installed (true \
+        for each step that's done), blocker (what stopped you and what I need to do; else "").
+        """
+        if !Edition.buildNote.isEmpty { prompt += "\n\n" + Edition.buildNote }
+        return launch(id: id, dir: dir, task: "Deploy", log: "idea-\(n)-deploy", prompt: prompt, schema: deploySchema,
+                      tools: ["--permission-mode", "acceptEdits", "--allowedTools", "Bash", "--disallowedTools"] + deployDenied,
+                      progress: progress, done: done)
+    }
+
+    /// One headless Claude Code run in `dir`, streamed: progress lines as it goes, then its structured reply
+    /// plus dir, folder, session, minutes, cost, and error/stopped when it didn't finish.
+    private static func launch(id: String, dir: String, task: String, log name: String, prompt: String, schema: String,
+                               tools: [String], progress: @escaping (String) -> Void,
+                               done: @escaping ([String: Any]) -> Void) -> Result<[String: String], AI.Failure> {
+        guard !jobs.values.contains(where: { $0.dir == dir }) else { return fail("Another card is busy in that folder. Wait for it to finish.") }
+        let folder = (dir as NSString).lastPathComponent
         let model = Edition.model(Settings.model)
         let session = UUID().uuidString.lowercased()
         let args = ["ideaforge", "-p", "--output-format", "stream-json", "--verbose", "--session-id", session,
                     "--disable-slash-commands", "--setting-sources", "project", "--settings", AI.authSettings().path,
-                    "--strict-mcp-config", "--permission-mode", "acceptEdits", "--allowedTools", "Bash",
-                    "--disallowedTools"] + denied
+                    "--strict-mcp-config"] + tools
             + ["--max-budget-usd", budget, "--json-schema", schema, "--model", model, prompt]
         let p = Process()
         p.executableURL = URL(fileURLWithPath: "/bin/zsh")
@@ -916,7 +990,7 @@ enum AutoBuild {
         let started = Date()
 
         // The whole run is kept next to the build scripts, for when something needs a closer look.
-        let logURL = Store.shared.support.appendingPathComponent("build/idea-\(n)-auto.jsonl")
+        let logURL = Store.shared.support.appendingPathComponent("build/\(name).jsonl")
         try? FileManager.default.createDirectory(at: logURL.deletingLastPathComponent(), withIntermediateDirectories: true)
         FileManager.default.createFile(atPath: logURL.path, contents: nil)
         let log = try? FileHandle(forWritingTo: logURL)
@@ -947,14 +1021,14 @@ enum AutoBuild {
             try? log?.close()
             DispatchQueue.main.async {
                 jobs[id] = nil
-                if !resultLine.isEmpty { Edition.logUsage(task: "Auto-build", model: model, output: resultLine) }
+                if !resultLine.isEmpty { Edition.logUsage(task: task, model: model, output: resultLine) }
                 var r = (result?["structured_output"] as? [String: Any]) ?? [:]
-                r["dir"] = dir; r["folder"] = folder; r["fresh"] = fresh; r["session"] = session
+                r["dir"] = dir; r["folder"] = folder; r["session"] = session
                 r["minutes"] = Int((Date().timeIntervalSince(started) / 60).rounded())
                 if let c = result?["total_cost_usd"] as? Double { r["cost"] = c }
                 if r["ok"] == nil {
                     var msg = ((result?["result"] as? String) ?? String(decoding: e, as: UTF8.self)).trimmingCharacters(in: .whitespacesAndNewlines)
-                    if result?["subtype"] as? String == "error_max_budget_usd" { msg = "Hit the $\(budget) spend cap for one build." }
+                    if result?["subtype"] as? String == "error_max_budget_usd" { msg = "Hit the $\(budget) spend cap for one run." }
                     if job.timedOut { msg = "It took longer than \(minutes) minutes, so it was stopped." }
                     if job.stopped { msg = "Stopped."; r["stopped"] = true }
                     r["ok"] = false
@@ -972,6 +1046,89 @@ enum AutoBuild {
         j.process.terminate()
     }
     static func stopAll() { jobs.keys.forEach(stop) }
+
+    // MARK: Deploy tracker
+
+    /// How far the change built at `since` has got, read from the folder's git and the installed app (slow-ish:
+    /// call it off the main thread). git (is it a repo), remote, tags (does the project tag releases),
+    /// committed, pushed, tag (the first tag holding the change), app (an installable app was found),
+    /// installed (it holds the change) and version (the installed one).
+    static func track(dir: String, since: Date, files: [String]) -> [String: Any] {
+        func git(_ a: [String]) -> String? {
+            let p = Process(), o = Pipe()
+            p.executableURL = URL(fileURLWithPath: "/usr/bin/git")
+            p.arguments = ["-C", dir] + a
+            p.standardOutput = o; p.standardError = FileHandle.nullDevice; p.standardInput = FileHandle.nullDevice
+            guard (try? p.run()) != nil else { return nil }
+            let d = o.fileHandleForReading.readDataToEndOfFile()
+            p.waitUntilExit()
+            return p.terminationStatus == 0 ? String(decoding: d, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines) : nil
+        }
+        var r: [String: Any] = ["git": false, "remote": false, "tags": false, "committed": false, "pushed": false,
+                                "tag": "", "app": false, "installed": false, "version": ""]
+        guard FileManager.default.fileExists(atPath: dir + "/.git") || git(["rev-parse", "--git-dir"]) != nil else { return r }
+        r["git"] = true
+        r["remote"] = !(git(["remote"]) ?? "").isEmpty
+        r["tags"] = !(git(["tag", "-l"]) ?? "").isEmpty
+        let paths = files.filter { !$0.isEmpty && !$0.hasPrefix("/") && !$0.hasPrefix("..") }
+        let spec = paths.isEmpty ? [] : ["--"] + paths
+        // The first commit since the build that touches its files holds the change.
+        let iso = ISO8601DateFormatter().string(from: since.addingTimeInterval(-60))
+        let first = (git(["log", "--since=\(iso)", "--format=%H %ct", "--reverse"] + spec) ?? "")
+            .split(separator: "\n").first.map { $0.split(separator: " ") }
+        let dirty = !(git(["status", "--porcelain"] + spec) ?? "x").isEmpty
+        var changedAt = since
+        if let f = first, f.count == 2, let t = Double(f[1]) {
+            let sha = String(f[0])
+            changedAt = Date(timeIntervalSince1970: t)
+            r["committed"] = !dirty
+            r["pushed"] = !(git(["branch", "-r", "--contains", sha]) ?? "").isEmpty
+            r["tag"] = (git(["tag", "--contains", sha, "--sort=v:refname"]) ?? "").split(separator: "\n").first.map(String.init) ?? ""
+        }
+
+        guard let bid = bundleID(dir), let url = installedApp(bid, outside: dir) else { return r }
+        r["app"] = true
+        let info = NSDictionary(contentsOf: url.appendingPathComponent("Contents/Info.plist")) as? [String: Any] ?? [:]
+        let version = info["CFBundleShortVersionString"] as? String ?? ""
+        r["version"] = version
+        let tag = (r["tag"] as? String ?? "").trimmingCharacters(in: CharacterSet(charactersIn: "vV"))
+        if !tag.isEmpty {
+            r["installed"] = !version.isEmpty && version.compare(tag, options: .numeric) != .orderedAscending
+        } else if r["committed"] as? Bool == true {
+            // No tag to go by: an app installed after the change was committed holds it.
+            let m = (try? url.appendingPathComponent("Contents/Info.plist").resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate
+            r["installed"] = (m ?? .distantPast) > changedAt
+        }
+        return r
+    }
+
+    /// The bundle id the project builds, from its build script, Info.plist or package.json.
+    private static func bundleID(_ dir: String) -> String? {
+        for f in ["build.sh", "package.sh", "app/build.sh", "mac/build.sh", "Info.plist", "app/Info.plist", "package.json", "app/package.json"] {
+            guard let s = try? String(contentsOfFile: dir + "/" + f, encoding: .utf8) else { continue }
+            for pattern in [#"<key>CFBundleIdentifier</key>\s*<string>([^<$]+)</string>"#, #""appId"\s*:\s*"([^"$]+)""#] {
+                if let re = try? NSRegularExpression(pattern: pattern),
+                   let m = re.firstMatch(in: s, range: NSRange(s.startIndex..., in: s)), let v = Range(m.range(at: 1), in: s) {
+                    return String(s[v])
+                }
+            }
+        }
+        return nil
+    }
+
+    /// The installed copy of app `id` in /Applications or ~/Applications (not the one built in the folder).
+    private static func installedApp(_ id: String, outside dir: String) -> URL? {
+        let fm = FileManager.default
+        for root in ["/Applications", NSHomeDirectory() + "/Applications"] {
+            for name in (try? fm.contentsOfDirectory(atPath: root)) ?? [] where name.hasSuffix(".app") {
+                let url = URL(fileURLWithPath: root + "/" + name)
+                let info = NSDictionary(contentsOf: url.appendingPathComponent("Contents/Info.plist"))
+                if info?["CFBundleIdentifier"] as? String == id { return url }
+            }
+        }
+        if let u = NSWorkspace.shared.urlForApplication(withBundleIdentifier: id), !u.path.hasPrefix(dir + "/") { return u }
+        return nil
+    }
 
     /// One short line for the card, from a stream event: what Claude is doing right now.
     private static func describe(_ o: [String: Any]) -> String? {

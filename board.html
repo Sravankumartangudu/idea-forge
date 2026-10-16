@@ -142,6 +142,10 @@ select.pill.on{border-color:var(--accent);color:var(--accent-ink);font-weight:60
 .shimmer::after{content:"";flex:1;height:5px;border-radius:3px;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--shaped) 45%,transparent),transparent);
   background-size:200% 100%;animation:shim 1.2s linear infinite}
 .shimmer .live{min-width:0;max-width:72%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pipe{margin-top:7px;display:flex;flex-wrap:wrap;align-items:center;gap:2px 5px;font-size:10.5px;color:var(--faint)}
+.pipe .on{color:color-mix(in srgb,var(--shipped) 65%,var(--text));font-weight:600}
+.pipe i{font-style:normal;opacity:.6}
+.d-body .pipe{font-size:12px;margin:4px 0 2px}
 .auto-sum{margin:2px 0 0;font-size:12.5px;line-height:1.45}
 .err{margin-top:8px;font-size:11.5px;color:#dc2626;display:flex;gap:6px;align-items:baseline}
 .err button{border:0;background:none;color:var(--accent-ink);font-weight:600;padding:0;text-decoration:underline}
@@ -505,10 +509,14 @@ window.forge = {
       for (const c of i.chat || []) if (c.pending && !S.asking.has(i.id)) { delete c.pending; c.err = 'Interrupted — ask again.'; }
       // Nor does an ⚡ Auto-build: quitting stops it.
       if (i.auto && i.auto.state === 'running' && !building.has(i.id)) Object.assign(i.auto, {state:'stopped', error:'Stopped when the app quit.'});
+      if (i.auto && i.auto.deploy && i.auto.deploy.state === 'running' && !building.has(i.id)) Object.assign(i.auto.deploy, {state:'stopped', error:'Stopped when the app quit.'});
+      // Builds before the deploy tracker went straight to Shipped; they wait in Building until they're installed.
+      if (i.auto && i.auto.state === 'done' && !i.auto.track && i.status === 'shipped') { i.status = 'building'; delete i.shippedAt; }
     }
     for (const c of chs()) c.status = c.status || 'open';
     $('#demoBanner').hidden = !S.demo;
     renderAll();
+    trackAll();
   },
   shaped(id, cards, err) {
     S.shaping.delete(id);
@@ -671,15 +679,53 @@ window.forge = {
     if (ok) {
       for (const k of r.stepsDone || []) if (i.steps[k - 1]) i.steps[k - 1].done = true;
       if (!i.app && r.fresh && r.folder) i.app = r.folder;
-      if (!['removed', 'shipped'].includes(i.status)) setStatus(i, 'shipped');
+      if (!['removed', 'building'].includes(i.status)) setStatus(i, 'building');
     }
     touch(i); flashIds.add(i.id);
     save(); renderAll(); if (S.open === id) renderDrawer();
+    if (ok) trackAll(true);
     const title = ok ? `⚡ Built #${i.n} ${nameOf(i)}` : `⚡ #${i.n} didn't finish`;
-    const body = ok ? `Built in ~/${i.auto.folder} and moved to Shipped. Nothing is committed — review it, then ship it.`
+    const body = ok ? `Built in ~/${i.auto.folder}, not deployed yet. Review it, then 🚀 Deploy it from the card.`
                     : `${clip(i.auto.error, 160)} It stays in Building.`;
     if (bg) post({cmd:'notify', title, body, open:`forge.openCard(${JSON.stringify(id)})`});
     else toast(`${title} — ${body}`, () => openDrawer(id), 'Open');
+  },
+  // 🚀 Deploy: how the run ended (or why it didn't start). The tracker then reads how far it really got.
+  deployed(id, r, bg) {
+    delete S.autoLive[id];
+    const i = byId(id);
+    if (!i || !i.auto) return;
+    const ok = !!r.ok, was = i.auto.deploy || {};
+    i.auto.deploy = r.refused ? Object.assign(was, {state:'failed', error:r.error, ended:now()})
+      : {state: ok ? 'done' : r.stopped ? 'stopped' : 'failed', started:was.started, ended:now(), summary:r.summary || '',
+         version:r.version || '', tag:r.tag || '', session:r.session || '', error: ok ? '' : (r.blocker || r.error || 'Stopped.'),
+         cost:r.cost, minutes:r.minutes};
+    touch(i); flashIds.add(i.id);
+    save(); render(); if (S.open === id) renderDrawer();
+    trackAll(true);
+    if (r.refused) { toast('🚀 ' + r.error); return; }
+    const title = ok ? `🚀 Deployed #${i.n} ${nameOf(i)}` : `🚀 #${i.n} didn't deploy`;
+    const body = ok ? (r.summary ? clip(r.summary, 160) : `Shipped${r.version ? ' ' + r.version : ''} from ~/${i.auto.folder}.`)
+                    : `${clip(i.auto.deploy.error, 160)} It stays in Building.`;
+    if (bg) post({cmd:'notify', title, body, open:`forge.openCard(${JSON.stringify(id)})`});
+    else toast(`${title} — ${body}`, () => openDrawer(id), 'Open');
+  },
+  tracked(map) {
+    let changed = false;
+    for (const [id, t] of Object.entries(map || {})) {
+      const i = byId(id);
+      if (!i || !i.auto) continue;
+      const before = JSON.stringify(i.auto.track || null);
+      i.auto.track = t;
+      if (JSON.stringify(t) !== before) changed = true;
+      // Once the installed app holds the change, it's shipped. Only once: moving it back out sticks.
+      if (deployed(i) && !i.auto.landed && i.status !== 'removed') {
+        i.auto.landed = now(); changed = true;
+        if (i.status !== 'shipped') { setStatus(i, 'shipped'); flashIds.add(i.id); toast(`🚀 #${i.n} ${clip(nameOf(i), 40)} is ${stages(i).pop().name.toLowerCase()} — moved to Shipped`); }
+      }
+    }
+    if (!changed) return;
+    save(); render(); if (S.open && map[S.open]) renderDrawer();
   },
   focusCapture() { closeDrawer(); if (S.tab === 'matrix') setTab('ideas'); setTimeout(() => $('#thought').focus(), 60); },
   capture(text) { addThought(text); },
@@ -972,9 +1018,11 @@ function cardHTML(i, withStage) {
       ${helpers ? `<span class="helpers">${helpers}</span>` : ''}
     </div>
     ${steps.length ? `<div class="progress"><div class="bar"><b style="width:${Math.round(done / steps.length * 100)}%"></b></div><span>${done}/${steps.length}</span></div>` : ''}
-    ${i.status === 'shipped' && i.shippedAt ? `<div class="when">🚀 Shipped ${fmtDate(i.shippedAt)}${i.auto && i.auto.state === 'done' ? ' · ⚡ built by Claude, not committed yet' : ''}</div>` : ''}
-    ${autoRunning(i) ? `<div class="shimmer">⚡ <span class="live" data-autolive="${esc(i.id)}">${esc(S.autoLive[i.id] || 'Building')}</span></div>` : ''}
+    ${i.status === 'shipped' && i.shippedAt ? `<div class="when">🚀 Shipped ${fmtDate(i.shippedAt)}</div>` : ''}
+    ${i.auto && i.auto.state === 'done' && !autoRunning(i) && i.status !== 'removed' && !(i.status === 'shipped' && deployed(i)) ? pipeHTML(i) : ''}
+    ${autoRunning(i) ? `<div class="shimmer">${deploying(i) ? '🚀' : '⚡'} <span class="live" data-autolive="${esc(i.id)}">${esc(S.autoLive[i.id] || (deploying(i) ? 'Deploying' : 'Building'))}</span></div>` : ''}
     ${i.auto && ['failed', 'stopped'].includes(i.auto.state) && i.status === 'building' ? `<div class="err">⚠︎ <span>⚡ ${esc(clip(i.auto.error || 'Stopped.', 110))}</span></div>` : ''}
+    ${i.auto && i.auto.state === 'done' && i.auto.deploy && ['failed', 'stopped'].includes(i.auto.deploy.state) && !deployed(i) && i.status === 'building' ? `<div class="err">⚠︎ <span>🚀 ${esc(clip(i.auto.deploy.error || 'Stopped.', 110))}</span></div>` : ''}
     ${S.tab === 'matrix' && i.placeWhy ? `<div class="why-q">${esc(i.placeWhy)}</div>` : ''}
     ${S.shaping.has(i.id) ? `<div class="shimmer">✨ Shaping with ${esc(word())}</div>` : ''}
     ${i.shapeError ? `<div class="err">⚠︎ <span>${esc(i.shapeError.slice(0, 140))}</span> <button data-retry="${esc(i.id)}">Retry</button></div>` : ''}
@@ -1341,18 +1389,58 @@ function setStatus(i, status) {
 
 // ---------- ⚡ Auto-build ----------
 // Claude Code builds the card on its own in the background (in the app's folder, or a new folder in ~ for
-// a new agent). The card moves to Building, then to Shipped when it builds cleanly; nothing is committed.
-const autoRunning = i => !!(i.auto && i.auto.state === 'running');
+// a new agent); nothing is committed. The card waits in Building, marked Built · not deployed, while the
+// tracker follows the change through Committed, Pushed, Released and Installed (🚀 Deploy has Claude do
+// those, or you ship it yourself); it moves to Shipped once the installed app holds it.
+const deploying = i => !!(i.auto && i.auto.deploy && i.auto.deploy.state === 'running');
+const autoRunning = i => !!(i.auto && (i.auto.state === 'running' || deploying(i)));
+/// The steps this project's change goes through, from what the tracker found (all five until it reports).
+function stages(i) {
+  const t = (i.auto && i.auto.track) || {git:true, remote:true, tags:true, app:true};
+  const s = [{k:'built', name:'Built', on:true}];
+  if (!t.git) return s;
+  s.push({k:'committed', name:'Committed', on:!!t.committed});
+  if (t.remote) s.push({k:'pushed', name:'Pushed', on:!!t.pushed});
+  if (t.tags || t.tag) s.push({k:'released', name:t.tag ? 'Released ' + t.tag : 'Released', on:!!t.tag});
+  if (t.app) s.push({k:'installed', name:t.installed && t.version ? 'Installed ' + t.version : 'Installed', on:!!t.installed});
+  return s;
+}
+const deployed = i => !!(i.auto && i.auto.state === 'done' && i.auto.track && i.auto.track.git && stages(i).every(x => x.on));
+function pipeHTML(i) {
+  const s = stages(i), t = i.auto.track;
+  const tip = !t ? 'Checking…' : !t.git ? 'No git repo in this folder yet' : deployed(i) ? 'Deployed' : 'Not deployed yet: ' + s.filter(x => !x.on).map(x => x.name.split(' ')[0].toLowerCase()).join(', ') + ' to go';
+  return `<div class="pipe" title="${esc(tip)}">${s.map(x => `<span class="${x.on ? 'on' : ''}">${x.on ? '✓' : '○'} ${esc(x.name)}</span>`).join('<i>›</i>')}${deployed(i) ? '' : '<span>· not deployed</span>'}</div>`;
+}
+/// Asks the app where each built change has got to (forge.tracked). At most every 10 s unless forced.
+function trackAll(force) {
+  if (S.demo || (!force && Date.now() - (S.trackedAt || 0) < 10000)) return;
+  const items = ideas().filter(i => i.auto && i.auto.state === 'done' && i.auto.dir && i.auto.ended && !i.auto.landed && i.status !== 'removed' && !autoRunning(i))
+    .map(i => ({id:i.id, dir:i.auto.dir, since:i.auto.ended, files:i.auto.files || []}));
+  if (!items.length) return;
+  S.trackedAt = Date.now();
+  post({cmd:'track', items});
+}
+setInterval(() => { if (!document.hidden) trackAll(); }, 60000);
+function deployIt(i) {
+  const a = i.auto;
+  a.deploy = {state:'running', started:now()};
+  S.autoLive[i.id] = 'Starting';
+  post({cmd:'deploy', id:i.id, n:i.n, dir:a.dir, summary:a.summary || '', files:a.files || []});
+  toast(`🚀 Deploying #${i.n} from ~/${a.folder} — it moves to Shipped once it's installed`);
+  flashIds.add(i.id);
+  save(); closeDrawer(); render();
+}
 function autoWhere(i) {
   const app = S.apps.find(a => a.name.toLowerCase() === (i.app || '').toLowerCase() && a.path);
   if (app) return '~/' + app.path.split('/').filter(Boolean).pop();
   return i.auto && i.auto.folder ? '~/' + i.auto.folder : 'a new folder in ~';
 }
 function autoBtnHTML(i) {
+  if (deploying(i)) return `<button class="btn" data-act="autostop" title="Stops the deploy where it is; whatever it already committed or pushed stays.">⏹ Stop deploy</button>`;
   if (autoRunning(i)) return `<button class="btn" data-act="autostop" title="Stops the build. What it changed so far stays in the folder.">⏹ Stop build</button>`;
   if (!S.ai.claude || S.demo || ['shipped', 'removed'].includes(i.status)) return '';
   const sure = S.autoConfirm === i.id, where = autoWhere(i);
-  return `<button class="btn ${sure ? 'primary' : ''}" data-act="auto" title="Claude Code builds it on its own in ${esc(where)}, in the background. The card moves to Building, then to Shipped when it builds cleanly. Nothing is committed, pushed, released or installed; each build stops at $5 or 45 minutes.">${sure ? `⚡ Build in ${esc(where)}?` : '⚡ Auto-build'}</button>`;
+  return `<button class="btn ${sure ? 'primary' : ''}" data-act="auto" title="Claude Code builds it on its own in ${esc(where)}, in the background. The card moves to Building and stays there, marked Built · not deployed, until you 🚀 Deploy it. The build itself commits, pushes, releases and installs nothing; it stops at $5 or 45 minutes.">${sure ? `⚡ Build in ${esc(where)}?` : '⚡ Auto-build'}</button>`;
 }
 function autoBuild(i) {
   if (i.status === 'suggested') keepIdea(i);
@@ -1371,10 +1459,16 @@ function autoHTML(i) {
   const a = i.auto;
   if (!a) return '';
   const where = a.folder ? '~/' + a.folder : '';
+  if (deploying(i)) return `<div class="field"><span class="lbl">⚡ Auto-build · 🚀 Deploying</span>
+    ${pipeHTML(i)}
+    <div class="shimmer" style="margin-top:2px">🚀 <span class="live" data-autolive="${esc(i.id)}">${esc(S.autoLive[i.id] || 'Working')}</span></div>
+    <div class="src">Started ${ago(a.deploy.started)}${where ? ' in ' + esc(where) : ''}. Claude commits, pushes, releases and installs it the way this project ships; it stops at $5 or 45 minutes.</div></div>`;
   if (a.state === 'running') return `<div class="field"><span class="lbl">⚡ Auto-build</span>
     <div class="shimmer" style="margin-top:2px">⚡ <span class="live" data-autolive="${esc(i.id)}">${esc(S.autoLive[i.id] || 'Working')}</span></div>
     <div class="src">Started ${ago(a.started)}${where ? ' in ' + esc(where) : ''}. It stops at $5 or 45 minutes and doesn't commit, push or release.</div></div>`;
-  const head = {done:'✅ Built', failed:'⚠︎ Didn\'t finish', stopped:'⏹ Stopped'}[a.state] || '';
+  const head = a.state === 'done' ? (deployed(i) ? '🚀 Deployed' : '✅ Built · not deployed') : {failed:'⚠︎ Didn\'t finish', stopped:'⏹ Stopped'}[a.state] || '';
+  const d = a.deploy, t = a.track, sure = S.autoConfirm === 'deploy:' + i.id;
+  const canDeploy = a.state === 'done' && !deployed(i) && S.ai.claude && !S.demo && i.status !== 'removed' && a.dir;
   const files = a.files || [];
   const facts = [where, a.minutes != null && `${a.minutes} min`, typeof a.cost === 'number' && `$${a.cost.toFixed(2)}`].filter(Boolean).join(' · ');
   return `<div class="field"><span class="lbl">⚡ Auto-build · ${head}${a.ended ? ' ' + fmtDate(a.ended) : ''}</span>
@@ -1382,9 +1476,14 @@ function autoHTML(i) {
     ${a.error ? `<div class="err" style="margin-top:4px">⚠︎ <span>${esc(a.error)}</span></div>` : ''}
     ${a.tryIt ? `<div class="src">▶︎ <b>Try it:</b> ${esc(a.tryIt)}</div>` : ''}
     ${files.length ? `<details class="raw"><summary>${files.length} file${files.length > 1 ? 's' : ''} changed</summary><div class="src">${files.map(esc).join('<br>')}</div></details>` : ''}
-    ${a.state === 'done' ? `<div class="note">Nothing is committed yet. Review the changes, then commit and release it yourself.</div>` : ''}
+    ${a.state === 'done' ? pipeHTML(i) : ''}
+    ${d && d.state !== 'running' ? `<div class="src">🚀 Deploy · ${{done:'✅ Done', failed:'⚠︎ Didn\'t finish', stopped:'⏹ Stopped'}[d.state] || ''}${d.ended ? ' ' + fmtDate(d.ended) : ''}${d.version ? ' · ' + esc(d.version) : ''}${typeof d.cost === 'number' ? ` · $${d.cost.toFixed(2)}` : ''}</div>
+      ${d.summary ? `<p class="auto-sum">${esc(d.summary)}</p>` : ''}${d.error ? `<div class="err" style="margin-top:4px">⚠︎ <span>${esc(d.error)}</span></div>` : ''}` : ''}
+    ${a.state === 'done' && !deployed(i) ? `<div class="note">${t && !t.git ? 'Not deployed: this folder has no git repo yet.' : 'Not deployed yet.'} Review the changes, then 🚀 Deploy has Claude commit, push, release and install it the way this project ships. Shipping it yourself works too: the line above follows along and the card moves to Shipped once the installed app has it.</div>` : ''}
     ${facts ? `<div class="src">${esc(facts)}</div>` : ''}
-    ${a.session && a.dir ? `<div class="sug-act"><button class="btn" data-act="autoresume" title="Opens this build's Claude Code session in Terminal, to ask what it did or finish the job">💬 Continue in Terminal</button></div>` : ''}</div>`;
+    ${canDeploy || (a.session && a.dir) ? `<div class="sug-act">
+      ${canDeploy ? `<button class="btn ${sure ? 'primary' : ''}" data-act="deploy" title="Claude Code commits, pushes, releases and installs it in ${esc(where)}, the way this project ships (its README, changelog and scripts). It can't force-push, rewrite history or delete; it stops at $5 or 45 minutes.">${sure ? '🚀 Commit, push, release & install?' : '🚀 Deploy'}</button>` : ''}
+      ${a.session && a.dir ? `<button class="btn" data-act="autoresume" title="Opens the last Claude Code session for this card in Terminal, to ask what it did or finish the job">💬 Continue in Terminal</button>` : ''}</div>` : ''}</div>`;
 }
 
 function brief(i) {
@@ -1953,8 +2052,19 @@ function ideaClick(e, i, segBtn) {
     S.autoConfirm = null;
     autoBuild(i);
   }
-  if (act === 'autostop') { post({cmd:'autoStop', id:i.id}); toast('⏹ Stopping the build…'); }
-  if (act === 'autoresume') post({cmd:'autoResume', session:i.auto.session, dir:i.auto.dir, n:i.n});
+  if (act === 'deploy') {
+    clearTimeout(S.autoConfirmT);
+    const key = 'deploy:' + i.id;
+    if (S.autoConfirm !== key) {
+      S.autoConfirm = key; renderDrawer();
+      S.autoConfirmT = setTimeout(() => { S.autoConfirm = null; if (S.open === i.id) renderDrawer(); }, 5000);
+      return;
+    }
+    S.autoConfirm = null;
+    deployIt(i);
+  }
+  if (act === 'autostop') { post({cmd:'autoStop', id:i.id}); toast(deploying(i) ? '⏹ Stopping the deploy…' : '⏹ Stopping the build…'); }
+  if (act === 'autoresume') post({cmd:'autoResume', session:(i.auto.deploy && i.auto.deploy.session) || i.auto.session, dir:i.auto.dir, n:i.n});
   if (act === 'reshape') { shape(i, true); renderDrawer(); }
   if (act === 'brief') { post({cmd:'copy', text:brief(i)}); toast('📋 Brief copied — paste it to whoever can help'); }
   if (act === 'issue') {
