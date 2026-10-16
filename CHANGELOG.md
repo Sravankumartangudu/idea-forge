@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.1 — 2026-10-16
+
+- Fixes a crash at launch that stopped the board from opening when Nexus or Citadel was running.
+
 ## 1.1.0 — 2026-10-15
 
 - 🧗 **Challenges** tab: write down the problems that slow you down. The AI shapes each one and sparks ideas

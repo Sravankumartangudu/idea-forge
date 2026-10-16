@@ -130,7 +130,13 @@ enum AI {
         p.executableURL = URL(fileURLWithPath: "/bin/zsh")
         p.arguments = ["-lc", #"export PATH="$HOME/.local/bin:$HOME/.devbar/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"; command -v "$1" >/dev/null"#, "ideaforge", cmd]
         p.standardOutput = FileHandle.nullDevice; p.standardError = FileHandle.nullDevice
-        do { try p.run(); p.waitUntilExit(); return p.terminationStatus == 0 } catch { return false }
+        // Not waitUntilExit(): it spins the main run loop, and a menu request arriving meanwhile (Nexus asks
+        // for the menu at launch) reads AI.current while this lazy check is still running, which crashes.
+        let gone = DispatchSemaphore(value: 0)
+        p.terminationHandler = { _ in gone.signal() }
+        do { try p.run() } catch { return false }
+        gone.wait()
+        return p.terminationStatus == 0
     }
     static let claudeInstalled = installed("claude")
     static let codexInstalled = installed("codex")
