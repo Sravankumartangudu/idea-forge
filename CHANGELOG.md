@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.3.2 — 2026-10-17
+
+- A card whose 🚀 Deploy stopped short but whose change got installed anyway (for example finished by hand)
+  now reads **✅ Finished outside the deploy · installed x.y**, and the old error is folded under
+  "Where the deploy stopped" instead of showing in red.
+- 🚀 Deploy's install step is surer: it knows the project's own scripts may quit and replace the app, and
+  deploying Idea Forge itself swaps the app in the background after the deploy replies, so quitting the app
+  doesn't cut the deploy off before the install.
+
 ## 1.3.1 — 2026-10-17
 
 - 🚀 **Deploy** is now the first button in a built card's bottom bar, so it's easy to find; ⚡ Auto-build reads

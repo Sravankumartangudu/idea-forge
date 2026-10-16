@@ -1484,8 +1484,12 @@ function autoHTML(i) {
     ${a.tryIt ? `<div class="src">▶︎ <b>Try it:</b> ${esc(a.tryIt)}</div>` : ''}
     ${files.length ? `<details class="raw"><summary>${files.length} file${files.length > 1 ? 's' : ''} changed</summary><div class="src">${files.map(esc).join('<br>')}</div></details>` : ''}
     ${a.state === 'done' ? pipeHTML(i) : ''}
-    ${d && d.state !== 'running' ? `<div class="src">🚀 Deploy · ${{done:'✅ Done', failed:'⚠︎ Didn\'t finish', stopped:'⏹ Stopped'}[d.state] || ''}${d.ended ? ' ' + fmtDate(d.ended) : ''}${d.version ? ' · ' + esc(d.version) : ''}${typeof d.cost === 'number' ? ` · $${d.cost.toFixed(2)}` : ''}</div>
-      ${d.summary ? `<p class="auto-sum">${esc(d.summary)}</p>` : ''}${d.error ? `<div class="err" style="margin-top:4px">⚠︎ <span>${esc(d.error)}</span></div>` : ''}` : ''}
+    ${d && d.state !== 'running' ? (d.state !== 'done' && deployed(i)
+      // The deploy stopped short, but the change got installed anyway (finished by hand): the old error is history.
+      ? `<div class="src">🚀 Deploy · ✅ Finished outside the deploy${t && t.version ? ' · installed ' + esc(t.version) : ''}${typeof d.cost === 'number' ? ` · $${d.cost.toFixed(2)}` : ''}</div>
+      ${d.summary || d.error ? `<details class="raw"><summary>Where the deploy stopped${d.ended ? ' ' + fmtDate(d.ended) : ''}</summary>${d.summary ? `<p class="auto-sum">${esc(d.summary)}</p>` : ''}${d.error ? `<div class="src">${esc(d.error)}</div>` : ''}</details>` : ''}`
+      : `<div class="src">🚀 Deploy · ${{done:'✅ Done', failed:'⚠︎ Didn\'t finish', stopped:'⏹ Stopped'}[d.state] || ''}${d.ended ? ' ' + fmtDate(d.ended) : ''}${d.version ? ' · ' + esc(d.version) : ''}${typeof d.cost === 'number' ? ` · $${d.cost.toFixed(2)}` : ''}</div>
+      ${d.summary ? `<p class="auto-sum">${esc(d.summary)}</p>` : ''}${d.error ? `<div class="err" style="margin-top:4px">⚠︎ <span>${esc(d.error)}</span></div>` : ''}`) : ''}
     ${a.state === 'done' && !deployed(i) ? `<div class="note">${t && !t.git ? 'Not deployed: this folder has no git repo yet.' : 'Not deployed yet.'} Review the changes, then 🚀 Deploy (at the bottom) has Claude commit, push, release and install it the way this project ships. Shipping it yourself works too: the line above follows along and the card moves to Shipped once the installed app has it.</div>` : ''}
     ${facts ? `<div class="src">${esc(facts)}</div>` : ''}
     ${a.session && a.dir ? `<div class="sug-act"><button class="btn" data-act="autoresume" title="Opens the last Claude Code session for this card in Terminal, to ask what it did or finish the job">💬 Continue in Terminal</button></div>` : ''}</div>`;

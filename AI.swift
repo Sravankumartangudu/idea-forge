@@ -945,10 +945,10 @@ enum AutoBuild {
         tag is unused, tag it, push the tag, and make the release with gh like the earlier ones (set GH_HOST to \
         the origin's host; attach the DMG or zip if earlier releases have one).
         5. If it's an app, install it the way this project installs (for example its package script, then ditto \
-        into /Applications) and relaunch it if it was running. osascript and rm -rf are blocked, and a command \
-        line holding either is refused whole, so a script that uses them won't run either: quit the app with \
-        pkill -x <name> then sleep 2, copy it over the old one with ditto <built .app> /Applications/<name>.app \
-        (no need to delete first), then open it.
+        into /Applications) and relaunch it if it was running. Only your own command lines are checked: osascript \
+        and rm -rf are blocked there, and a line holding either is refused whole, though the project's scripts \
+        may use them inside. So to replace a running app, quit it with pkill -x <name> then sleep 2, copy it over \
+        the old one with ditto <built .app> /Applications/<name>.app (no need to delete first), then open it.\(selfNote(dir))
         If there's no git remote, commit locally and stop there, and say so in blocker. If a step fails, stop and \
         say what failed; don't work around it.
 
@@ -960,6 +960,17 @@ enum AutoBuild {
         return launch(id: id, dir: dir, task: "Deploy", log: "idea-\(n)-deploy", prompt: prompt, schema: deploySchema,
                       tools: ["--permission-mode", "acceptEdits", "--allowedTools", "Bash", "--disallowedTools"] + deployDenied,
                       progress: progress, done: done)
+    }
+
+    /// Deploying this very app: quitting it would end the run before the copy, so the swap has to outlive it.
+    private static func selfNote(_ dir: String) -> String {
+        guard let mine = Bundle.main.bundleIdentifier, bundleID(dir) == mine else { return "" }
+        let name = ProcessInfo.processInfo.processName
+        return """
+         This project is the app running you (\(name)), so quitting it ends this run. Do the install last, as one \
+        detached line: nohup sh -c 'sleep 5; pkill -x \(name); sleep 2; ditto <built .app> /Applications/\(name).app; \
+        open /Applications/\(name).app' >/dev/null 2>&1 & then reply straight away with installed true.
+        """
     }
 
     /// One headless Claude Code run in `dir`, streamed: progress lines as it goes, then its structured reply
