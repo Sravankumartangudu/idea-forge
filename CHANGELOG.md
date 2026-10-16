@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.1.2 — 2026-10-16
+
+- The Stages | Groups switch now sits apart from the Ideas, Challenges and Matrix tabs, with a gap and a
+  divider, so it no longer looks like a fourth and fifth tab.
+
 ## 1.1.1 — 2026-10-16
 
 - Fixes a crash at launch that stopped the board from opening when Nexus or Citadel was running.

@@ -399,6 +399,7 @@ final class App: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.delegate = self
         item.menu = menu
         NexusBeacon.attach(item)   // lets the app live in its parent's (Nexus or Citadel) menu
+        Edition.started()
         item.button?.toolTip = "\(Edition.name) — your next apps and agents"
         updateTitle()
         store.onChange = { [weak self] in
@@ -559,6 +560,7 @@ final class App: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(action("Copy Pending Checklist", #selector(copyChecklist)))
         menu.addItem(settingsItem())
         menu.addItem(action("Help & Source on \(Edition.repoLabel)", #selector(openHelp)))
+        if let i = Edition.menuItem() { menu.addItem(i) }
         menu.addItem(.separator())
         menu.addItem(action("Quit \(Edition.name)", #selector(quit), "q"))
     }
@@ -861,6 +863,7 @@ final class Board: NSObject, NSWindowDelegate, WKNavigationDelegate, WKScriptMes
 
     func userContentController(_ c: WKUserContentController, didReceive m: WKScriptMessage) {
         guard let msg = m.body as? [String: Any], let cmd = msg["cmd"] as? String else { return }
+        Edition.boardAction(cmd)
         let app = NSApp.delegate as? App
         let id = msg["id"] as? String
         switch cmd {

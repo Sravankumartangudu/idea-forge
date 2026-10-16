@@ -244,6 +244,9 @@ body.ed-work .logo{background:linear-gradient(145deg,#99f6e4,#14b8a6 55%,#0f766e
 :root{--ch-open:#f97316;--ch-ideas:#8b5cf6;--ch-solved:#10b981;--o-ai:#8b5cf6;--o-page:#3b82f6;--o-teammate:#10b981}
 .tabbar{display:flex;align-items:center;gap:8px;padding:0 20px 10px;flex-wrap:wrap}
 .tabbar .grow{flex:1}
+/* Stages | Groups is a layout switch, not a tab: set it apart with space and a divider. */
+.tabbar #viewSeg{position:relative;margin-left:25px}
+.tabbar #viewSeg::before{content:'';position:absolute;left:-17px;top:5px;bottom:5px;width:1px;background:var(--line)}
 .tabs{flex:none}
 .tabs button{flex:none;padding:6px 14px;font-size:12.5px}
 .tabs .n{font-size:10.5px;color:var(--faint);margin-left:5px;font-variant-numeric:tabular-nums}

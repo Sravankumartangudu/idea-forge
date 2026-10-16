@@ -5,7 +5,7 @@
 // This edition is for anyone: pick any AI (Claude Code, Anthropic, OpenAI, Gemini, OpenRouter, Ollama or
 // an OpenAI-compatible server). It never reads your screen, browser or other apps.
 
-import Foundation
+import AppKit
 
 enum Edition {
     static let name = "Idea Forge"
@@ -65,4 +65,10 @@ enum Edition {
     static func modelChanged() {}
     /// Called after every Claude Code call, with the CLI's JSON output.
     static func logUsage(task: String, model: String, output: Data) {}
+    /// Called once the menu-bar item is set up.
+    static func started() {}
+    /// An extra item for the bottom of the menu, or nil.
+    static func menuItem() -> NSMenuItem? { nil }
+    /// Called for every command the board sends.
+    static func boardAction(_ cmd: String) {}
 }
