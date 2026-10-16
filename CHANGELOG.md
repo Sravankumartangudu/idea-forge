@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.3.1 — 2026-10-17
+
+- 🚀 **Deploy** is now the first button in a built card's bottom bar, so it's easy to find; ⚡ Auto-build reads
+  ⚡ Rebuild there once a build is done.
+- 🚀 Deploy can now install an app that's running: it quits it with pkill and copies the new one over it.
+  Before, it tried osascript and rm -rf, which are blocked, so the install stopped.
+
 ## 1.3.0 — 2026-10-17
 
 - ⚡ **Auto-build no longer means shipped.** A finished build stays in Building, marked **✅ Built · not
