@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.2.0 — 2026-10-17
+
+- ⚡ **Auto-build**: one button in a card's drawer, and Claude Code builds the idea on its own in the
+  background. It works in the app's folder for an enhancement, or in a new folder in ~ for a new agent.
+  The card moves to Building straight away and shows what Claude is doing. When the project builds cleanly,
+  the card moves to Shipped and the steps it finished are ticked. The drawer shows a summary, how to try
+  it, the files it changed and **💬 Continue in Terminal**. If it can't finish, the card stays in Building
+  with the reason.
+- Guard rails: Auto-build skips your Claude settings and MCP servers. It can't commit, push, tag, release,
+  install or reach the network, and each build stops at $5 or 45 minutes. **⏹ Stop build** stops it, and
+  quitting the app stops it too. Nothing is committed, so you review the changes and ship them yourself.
+
 ## 1.1.2 — 2026-10-16
 
 - The Stages | Groups switch now sits apart from the Ideas, Challenges and Matrix tabs, with a gap and a

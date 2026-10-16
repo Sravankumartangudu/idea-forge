@@ -141,6 +141,8 @@ select.pill.on{border-color:var(--accent);color:var(--accent-ink);font-weight:60
 .shimmer{margin-top:8px;font-size:11.5px;font-weight:600;color:var(--shaped);display:flex;align-items:center;gap:7px}
 .shimmer::after{content:"";flex:1;height:5px;border-radius:3px;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--shaped) 45%,transparent),transparent);
   background-size:200% 100%;animation:shim 1.2s linear infinite}
+.shimmer .live{min-width:0;max-width:72%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.auto-sum{margin:2px 0 0;font-size:12.5px;line-height:1.45}
 .err{margin-top:8px;font-size:11.5px;color:#dc2626;display:flex;gap:6px;align-items:baseline}
 .err button{border:0;background:none;color:var(--accent-ink);font-weight:600;padding:0;text-decoration:underline}
 .ghost{position:fixed;z-index:50;pointer-events:none;transform:rotate(2.2deg) scale(1.03);box-shadow:var(--ghost);cursor:grabbing;animation:none;transition:none;opacity:.97}
@@ -412,7 +414,7 @@ const NO_AI = {provider:'', word:'AI', ready:false, problem:'', model:'', models
 const S = {doc:{version:1, ideas:[], challenges:[]}, apps:[], people:[], ai:NO_AI, updates:{}, hotkeys:'', demo:false, settings:{}, file:'', version:'', ed:PERSONAL,
            customFolder:false, tab:localStorage.tab || 'ideas', view:localStorage.view || 'stages',
            q:'', fType:'all', fHome:'all', fGroup:'', fOrigin:'all', selecting:false, picked:new Set(), open:null, openKind:'idea',
-           shaping:new Set(), chShaping:new Set(), sparking:new Set(), asking:new Set(),
+           shaping:new Set(), chShaping:new Set(), sparking:new Set(), asking:new Set(), autoLive:{}, autoConfirm:null,
            nexting:false, placing:false, capturing:false, finding:false, testing:false, testResult:null, deferred:null};
 if (!['ideas', 'challenges', 'matrix'].includes(S.tab)) S.tab = 'ideas';
 
@@ -496,10 +498,13 @@ window.forge = {
     S.settings = state.settings || {}; S.file = state.file || ''; S.version = state.version || ''; S.customFolder = !!state.customFolder;
     S.ed = Object.assign({}, PERSONAL, state.edition || {});
     applyEdition();
+    const building = new Set(state.autoRunning || []);
     for (const i of ideas()) {
       i.steps = i.steps || []; i.helpers = i.helpers || []; i.tags = i.tags || []; i.status = i.status || 'inbox';
       // An answer that was on its way when the app quit never arrives.
       for (const c of i.chat || []) if (c.pending && !S.asking.has(i.id)) { delete c.pending; c.err = 'Interrupted — ask again.'; }
+      // Nor does an ⚡ Auto-build: quitting stops it.
+      if (i.auto && i.auto.state === 'running' && !building.has(i.id)) Object.assign(i.auto, {state:'stopped', error:'Stopped when the app quit.'});
     }
     for (const c of chs()) c.status = c.status || 'open';
     $('#demoBanner').hidden = !S.demo;
@@ -636,6 +641,46 @@ window.forge = {
   toast(text) { toast(text); },
   open(url) { post({cmd:'open', url}); },
   built(ok) { toast(ok ? '🚀 Opened in Terminal' : '⚠︎ Couldn\'t open Terminal'); },
+  // ⚡ Auto-build: started (or refused), what it's doing now, and how it ended.
+  autoStarted(id, err, info) {
+    const i = byId(id);
+    if (!i || !i.auto) return;
+    if (err) {
+      delete S.autoLive[id];
+      if (i.auto.from && i.status === 'building') setStatus(i, i.auto.from);
+      Object.assign(i.auto, {state:'failed', error:err, ended:now()});
+      toast('⚡ ' + err);
+    } else {
+      Object.assign(i.auto, info);
+      toast(`⚡ Building #${i.n} in ~/${info.folder} — the card moves on its own when it's done`);
+    }
+    save(); render(); if (S.open === id) renderDrawer();
+  },
+  autoProgress(id, line) {
+    S.autoLive[id] = line;
+    $$(`[data-autolive="${CSS.escape(id)}"]`).forEach(e => { e.textContent = line; e.title = line; });
+  },
+  autoBuilt(id, r, bg) {
+    delete S.autoLive[id];
+    const i = byId(id);
+    if (!i) return;
+    const ok = !!r.ok;
+    i.auto = {state: ok ? 'done' : r.stopped ? 'stopped' : 'failed', started:(i.auto || {}).started, ended:now(),
+      dir:r.dir || '', folder:r.folder || '', session:r.session || '', summary:r.summary || '', tryIt:r.tryIt || '',
+      files:(r.files || []).slice(0, 40).map(f => String(f).replace(/^\/private(?=\/)/, '').replace((r.dir || '\0') + '/', '')), error: ok ? '' : (r.blocker || r.error || 'Stopped.'), cost:r.cost, minutes:r.minutes};
+    if (ok) {
+      for (const k of r.stepsDone || []) if (i.steps[k - 1]) i.steps[k - 1].done = true;
+      if (!i.app && r.fresh && r.folder) i.app = r.folder;
+      if (!['removed', 'shipped'].includes(i.status)) setStatus(i, 'shipped');
+    }
+    touch(i); flashIds.add(i.id);
+    save(); renderAll(); if (S.open === id) renderDrawer();
+    const title = ok ? `⚡ Built #${i.n} ${nameOf(i)}` : `⚡ #${i.n} didn't finish`;
+    const body = ok ? `Built in ~/${i.auto.folder} and moved to Shipped. Nothing is committed — review it, then ship it.`
+                    : `${clip(i.auto.error, 160)} It stays in Building.`;
+    if (bg) post({cmd:'notify', title, body, open:`forge.openCard(${JSON.stringify(id)})`});
+    else toast(`${title} — ${body}`, () => openDrawer(id), 'Open');
+  },
   focusCapture() { closeDrawer(); if (S.tab === 'matrix') setTab('ideas'); setTimeout(() => $('#thought').focus(), 60); },
   capture(text) { addThought(text); },
   openCard(id) { if (byId(id)) openDrawer(id); else if (chById(id)) openChallenge(id); },
@@ -927,7 +972,9 @@ function cardHTML(i, withStage) {
       ${helpers ? `<span class="helpers">${helpers}</span>` : ''}
     </div>
     ${steps.length ? `<div class="progress"><div class="bar"><b style="width:${Math.round(done / steps.length * 100)}%"></b></div><span>${done}/${steps.length}</span></div>` : ''}
-    ${i.status === 'shipped' && i.shippedAt ? `<div class="when">🚀 Shipped ${fmtDate(i.shippedAt)}</div>` : ''}
+    ${i.status === 'shipped' && i.shippedAt ? `<div class="when">🚀 Shipped ${fmtDate(i.shippedAt)}${i.auto && i.auto.state === 'done' ? ' · ⚡ built by Claude, not committed yet' : ''}</div>` : ''}
+    ${autoRunning(i) ? `<div class="shimmer">⚡ <span class="live" data-autolive="${esc(i.id)}">${esc(S.autoLive[i.id] || 'Building')}</span></div>` : ''}
+    ${i.auto && ['failed', 'stopped'].includes(i.auto.state) && i.status === 'building' ? `<div class="err">⚠︎ <span>⚡ ${esc(clip(i.auto.error || 'Stopped.', 110))}</span></div>` : ''}
     ${S.tab === 'matrix' && i.placeWhy ? `<div class="why-q">${esc(i.placeWhy)}</div>` : ''}
     ${S.shaping.has(i.id) ? `<div class="shimmer">✨ Shaping with ${esc(word())}</div>` : ''}
     ${i.shapeError ? `<div class="err">⚠︎ <span>${esc(i.shapeError.slice(0, 140))}</span> <button data-retry="${esc(i.id)}">Retry</button></div>` : ''}
@@ -1200,6 +1247,7 @@ function renderDrawer() {
         </div></div>
       ${(i.similar || []).length ? `<div class="field"><span class="lbl">🔁 Looks like</span>${i.similar.map(n => { const x = ideas().find(y => y.n === n);
           return x ? `<span class="chip sim" data-goto="${n}" style="margin-right:6px">#${n} ${esc(clip(nameOf(x), 48))}</span>` : ''; }).join('')}</div>` : ''}
+      ${autoHTML(i)}
       ${askHTML(i)}
       <div class="field"><span class="lbl">🤝 Who can help</span>${tokensHTML('helpers', i.helpers, 'Add a name and press Return')}</div>
       <div class="field"><span class="lbl">Tags</span>${tokensHTML('tags', i.tags, 'Add a tag')}</div>
@@ -1211,6 +1259,7 @@ function renderDrawer() {
     <div class="d-foot">
       <button class="btn primary" data-act="reshape" ${aiOK() ? '' : `disabled title="${esc(S.ai.problem || 'Set up an AI in Settings')}"`}>${S.shaping.has(i.id) ? '✨ Shaping…' : (i.shapedAt ? '✨ Re-shape' : '✨ Shape')}</button>
       ${S.ai.claude ? `<button class="btn" data-act="build" data-tool="claude" title="Opens Claude Code in Terminal${i.app ? ' in ' + esc(i.app) + "'s folder" : ''}, with this card as the brief">🚀 Claude Code</button>` : ''}
+      ${autoBtnHTML(i)}
       ${S.ai.codex ? `<button class="btn" data-act="build" data-tool="codex" title="Opens Codex in Terminal${i.app ? ' in ' + esc(i.app) + "'s folder" : ''}, with this card as the brief">🚀 Codex</button>` : ''}
       <button class="btn" data-act="brief" title="Copy a Markdown brief to share with someone who can help">📋 Copy brief</button>
       ${app && safeUrl(app.repo) ? `<button class="btn" data-act="issue" title="Open a new issue on ${esc(app.name)}'s repo, filled with this card">🐙 Open as issue</button>` : ''}
@@ -1288,6 +1337,52 @@ function setStatus(i, status) {
   // Shipping the idea for a challenge solves it.
   const c = status === 'shipped' && i.challenge && chById(i.challenge);
   if (c && c.status === 'open') { c.status = 'solved'; c.solvedAt = now(); touch(c); setTimeout(() => toast(`✅ C#${c.n} solved by #${i.n}`), 2600); }
+}
+
+// ---------- ⚡ Auto-build ----------
+// Claude Code builds the card on its own in the background (in the app's folder, or a new folder in ~ for
+// a new agent). The card moves to Building, then to Shipped when it builds cleanly; nothing is committed.
+const autoRunning = i => !!(i.auto && i.auto.state === 'running');
+function autoWhere(i) {
+  const app = S.apps.find(a => a.name.toLowerCase() === (i.app || '').toLowerCase() && a.path);
+  if (app) return '~/' + app.path.split('/').filter(Boolean).pop();
+  return i.auto && i.auto.folder ? '~/' + i.auto.folder : 'a new folder in ~';
+}
+function autoBtnHTML(i) {
+  if (autoRunning(i)) return `<button class="btn" data-act="autostop" title="Stops the build. What it changed so far stays in the folder.">⏹ Stop build</button>`;
+  if (!S.ai.claude || S.demo || ['shipped', 'removed'].includes(i.status)) return '';
+  const sure = S.autoConfirm === i.id, where = autoWhere(i);
+  return `<button class="btn ${sure ? 'primary' : ''}" data-act="auto" title="Claude Code builds it on its own in ${esc(where)}, in the background. The card moves to Building, then to Shipped when it builds cleanly. Nothing is committed, pushed, released or installed; each build stops at $5 or 45 minutes.">${sure ? `⚡ Build in ${esc(where)}?` : '⚡ Auto-build'}</button>`;
+}
+function autoBuild(i) {
+  if (i.status === 'suggested') keepIdea(i);
+  const from = i.status, last = i.auto || {};
+  i.auto = {state:'running', started:now(), from, dir:last.dir || '', folder:last.folder || ''};
+  S.autoLive[i.id] = 'Starting';
+  setStatus(i, 'building');
+  // Steps go numbered, done ones marked, so Claude can say which ones it finished.
+  const steps = (i.steps || []).map(s => (s.done ? '(already done) ' : '') + s.t);
+  post({cmd:'autoBuild', id:i.id, n:i.n, brief:brief(i), app:i.app || '', name:nameOf(i), steps, dir:last.dir || ''});
+  save(); render(); renderDrawer();
+}
+function autoHTML(i) {
+  const a = i.auto;
+  if (!a) return '';
+  const where = a.folder ? '~/' + a.folder : '';
+  if (a.state === 'running') return `<div class="field"><span class="lbl">⚡ Auto-build</span>
+    <div class="shimmer" style="margin-top:2px">⚡ <span class="live" data-autolive="${esc(i.id)}">${esc(S.autoLive[i.id] || 'Working')}</span></div>
+    <div class="src">Started ${ago(a.started)}${where ? ' in ' + esc(where) : ''}. It stops at $5 or 45 minutes and doesn't commit, push or release.</div></div>`;
+  const head = {done:'✅ Built', failed:'⚠︎ Didn\'t finish', stopped:'⏹ Stopped'}[a.state] || '';
+  const files = a.files || [];
+  const facts = [where, a.minutes != null && `${a.minutes} min`, typeof a.cost === 'number' && `$${a.cost.toFixed(2)}`].filter(Boolean).join(' · ');
+  return `<div class="field"><span class="lbl">⚡ Auto-build · ${head}${a.ended ? ' ' + fmtDate(a.ended) : ''}</span>
+    ${a.summary ? `<p class="auto-sum">${esc(a.summary)}</p>` : ''}
+    ${a.error ? `<div class="err" style="margin-top:4px">⚠︎ <span>${esc(a.error)}</span></div>` : ''}
+    ${a.tryIt ? `<div class="src">▶︎ <b>Try it:</b> ${esc(a.tryIt)}</div>` : ''}
+    ${files.length ? `<details class="raw"><summary>${files.length} file${files.length > 1 ? 's' : ''} changed</summary><div class="src">${files.map(esc).join('<br>')}</div></details>` : ''}
+    ${a.state === 'done' ? `<div class="note">Nothing is committed yet. Review the changes, then commit and release it yourself.</div>` : ''}
+    ${facts ? `<div class="src">${esc(facts)}</div>` : ''}
+    ${a.session && a.dir ? `<div class="sug-act"><button class="btn" data-act="autoresume" title="Opens this build's Claude Code session in Terminal, to ask what it did or finish the job">💬 Continue in Terminal</button></div>` : ''}</div>`;
 }
 
 function brief(i) {
@@ -1844,6 +1939,19 @@ function ideaClick(e, i, segBtn) {
     if (i.status === 'inbox' || i.status === 'shaped') setStatus(i, 'building');
     save(); render(); renderDrawer();
   }
+  if (act === 'auto') {
+    // First click asks where; a second click within 5 seconds starts it.
+    clearTimeout(S.autoConfirmT);
+    if (S.autoConfirm !== i.id) {
+      S.autoConfirm = i.id; renderDrawer();
+      S.autoConfirmT = setTimeout(() => { S.autoConfirm = null; if (S.open === i.id) renderDrawer(); }, 5000);
+      return;
+    }
+    S.autoConfirm = null;
+    autoBuild(i);
+  }
+  if (act === 'autostop') { post({cmd:'autoStop', id:i.id}); toast('⏹ Stopping the build…'); }
+  if (act === 'autoresume') post({cmd:'autoResume', session:i.auto.session, dir:i.auto.dir, n:i.n});
   if (act === 'reshape') { shape(i, true); renderDrawer(); }
   if (act === 'brief') { post({cmd:'copy', text:brief(i)}); toast('📋 Brief copied — paste it to whoever can help'); }
   if (act === 'issue') {
@@ -1853,6 +1961,7 @@ function ideaClick(e, i, segBtn) {
   }
   if (act === 'remove') {
     const prev = i.status, order = i.order;
+    if (autoRunning(i)) post({cmd:'autoStop', id:i.id});
     setStatus(i, 'removed'); save(); closeDrawer(); render();
     toast('🗑 Removed: ' + nameOf(i), () => { i.status = prev; i.order = order; delete i.removedAt; save(); render(); });
   }

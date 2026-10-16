@@ -53,6 +53,7 @@ In **⚙︎ Settings › AI**, pick a provider:
 | **🎯 What next?** | The AI reads the whole board and picks up to three ideas to do next, with a reason for each. |
 | **🔁 Looks like #n** | While shaping, the AI links a new card to close matches already on the board, so you can merge instead of adding twice. |
 | **🚀 Build** | Opens Terminal with a Claude Code or Codex session (whichever you have installed) that already has the card as its brief. It starts in the app's folder for an enhancement. The card moves to Building. |
+| **⚡ Auto-build** | With Claude Code installed, Claude builds the card on its own, in the background. It works in the app's folder for an enhancement, or in a new folder in ~ for a new agent, then builds the project and fixes it until it builds cleanly. The card moves to Building at the start and to Shipped when it's done, with the summary, how to try it and the files it changed. If it can't finish, the card stays in Building with the reason. It doesn't commit, push, release or install anything, and each build stops at $5 or 45 minutes. **💬 Continue in Terminal** opens the same session. |
 | **🐙 Open as issue** | When the card is for one of your apps with a GitHub repo, opens a new issue there, filled with the card. |
 | **Remove** | Use 🗑 Remove in the drawer, or **Select** several cards and remove them together. Removed cards go to the 🗑 bin, where you can restore them. |
 | **Checklist** | 📋 Checklist copies all pending ideas as a Markdown checklist (`- [ ] #3 Build a receipt scanner agent`). |

@@ -381,6 +381,9 @@ final class App: NSObject, NSApplicationDelegate, NSMenuDelegate {
     var working = 0 { didSet { updateTitle() } }
     private var tick: Timer?
 
+    /// A build left running would carry on with nobody to report to, so quitting stops it.
+    func applicationWillTerminate(_ n: Notification) { AutoBuild.stopAll() }
+
     func applicationDidFinishLaunching(_ n: Notification) {
         Settings.applyAppearance()
         installEditMenu()
@@ -848,6 +851,7 @@ final class Board: NSObject, NSWindowDelegate, WKNavigationDelegate, WKScriptMes
                          "lastFind": Settings.lastFind.map { ISO8601DateFormatter().string(from: $0) } ?? "",
                          "showCount": Settings.showCount, "login": SMAppService.mainApp.status == .enabled],
             "version": Updates.current,
+            "autoRunning": AutoBuild.running,
         ]
         web?.evaluateJavaScript("forge.load(\(Board.json(state)))", completionHandler: nil)
     }
@@ -903,6 +907,32 @@ final class Board: NSObject, NSWindowDelegate, WKNavigationDelegate, WKScriptMes
             guard let brief = msg["brief"] as? String, let n = msg["n"] as? Int else { return }
             let ok = AI.build(brief: brief, app: msg["app"] as? String ?? "", number: n, tool: msg["tool"] as? String ?? "claude")
             run("forge.built(\(ok))")
+        case "autoBuild":
+            // ⚡ Auto-build: Claude Code builds the card in the background; the card moves when it reports back.
+            guard let id, let brief = msg["brief"] as? String, let n = msg["n"] as? Int else { return }
+            let r = AutoBuild.start(id: id, n: n, brief: brief, app: msg["app"] as? String ?? "", name: msg["name"] as? String ?? "",
+                                    steps: msg["steps"] as? [String] ?? [], dir: msg["dir"] as? String ?? "",
+                progress: { [weak self] line in
+                    guard let self, self.ready else { return }
+                    self.run("forge.autoProgress(\(Board.js(id)), \(Board.js(line)))")
+                },
+                done: { [weak self] result in
+                    guard let self else { return }
+                    app?.working -= 1
+                    self.ensure(then: "forge.autoBuilt(\(Board.js(id)), \(Board.json(result)), \(!self.visible))")
+                })
+            switch r {
+            case .success(let info):
+                app?.working += 1
+                run("forge.autoStarted(\(Board.js(id)), null, \(Board.json(info)))")
+            case .failure(let e):
+                run("forge.autoStarted(\(Board.js(id)), \(Board.js(e.localizedDescription)), null)")
+            }
+        case "autoStop":
+            if let id { AutoBuild.stop(id) }
+        case "autoResume":
+            guard let s = msg["session"] as? String, let dir = msg["dir"] as? String, let n = msg["n"] as? Int else { return }
+            run("forge.built(\(AI.resume(session: s, dir: dir, number: n)))")
         case "copy":
             if let t = msg["text"] as? String { Board.copy(t) }
         case "notify":

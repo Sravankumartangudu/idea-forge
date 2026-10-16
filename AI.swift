@@ -400,7 +400,7 @@ enum AI {
 
     /// Copies only the auth keys from ~/.claude/settings.json: user settings are skipped
     /// (`--setting-sources project`) so no allow-list or hook from them can ride along.
-    private static func authSettings() -> URL {
+    static func authSettings() -> URL {
         let out = Store.shared.support.appendingPathComponent("auth-settings.json")
         let user = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".claude/settings.json")
         var auth: [String: Any] = ["enabledPlugins": [String: Any]()]
@@ -767,11 +767,26 @@ enum AI {
             ? "\(app.isEmpty ? "It's a new app or agent." : "It's for \(app), but I couldn't find its folder.") Look around before you start, suggest a folder name in ~, and confirm the plan with me first."
             : "The code for \(app) is in this folder. Read it first, then propose a short plan and confirm it with me before making changes."
         if !Edition.buildNote.isEmpty { prompt += "\n\n" + Edition.buildNote }
-        let runs = Store.shared.support.appendingPathComponent("build", isDirectory: true)
-        try? FileManager.default.createDirectory(at: runs, withIntermediateDirectories: true)
         let promptFile = runs.appendingPathComponent("idea-\(number).md")
+        do { try prompt.write(to: promptFile, atomically: true, encoding: .utf8) } catch { return false }
+        return terminal(dir: dir, number: number, label: label, run: "exec \(cli) \"$(cat \(q(promptFile.path)))\"")
+    }
+
+    /// Reopens an ⚡ Auto-build's Claude Code session in Terminal, to review what it did or finish the job.
+    static func resume(session: String, dir: String, number: Int) -> Bool {
+        guard UUID(uuidString: session) != nil, FileManager.default.fileExists(atPath: dir) else { return false }
+        return terminal(dir: dir, number: number, label: "Claude Code (⚡ Auto-build)", run: "exec claude --resume \(session)")
+    }
+
+    private static var runs: URL {
+        let u = Store.shared.support.appendingPathComponent("build", isDirectory: true)
+        try? FileManager.default.createDirectory(at: u, withIntermediateDirectories: true)
+        return u
+    }
+    private static func q(_ s: String) -> String { "'" + s.replacingOccurrences(of: "'", with: #"'\''"#) + "'" }
+
+    private static func terminal(dir: String, number: Int, label: String, run: String) -> Bool {
         let script = runs.appendingPathComponent("idea-\(number).command")
-        func q(_ s: String) -> String { "'" + s.replacingOccurrences(of: "'", with: #"'\''"#) + "'" }
         let sh = """
         #!/bin/zsh -l
         # Opened by \(Edition.name): a \(label) session for idea #\(number).
@@ -779,14 +794,209 @@ enum AI {
         cd \(q(dir)) || exit 1
         clear
         echo "\(Edition.symbol)  \(Edition.name) → \(label) · idea #\(number)"
-        exec \(cli) "$(cat \(q(promptFile.path)))"
+        \(run)
 
         """
         do {
-            try prompt.write(to: promptFile, atomically: true, encoding: .utf8)
             try sh.write(to: script, atomically: true, encoding: .utf8)
             try FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: script.path)
         } catch { return false }
         return NSWorkspace.shared.open(script)
+    }
+}
+
+// MARK: - ⚡ Auto-build (Claude Code builds a card on its own, in the background)
+
+/// A headless Claude Code run in the app's folder (or a new folder in ~ for a new agent) that makes the change
+/// and gets it to build, then reports back so the card moves on by itself. It may edit files there and run the
+/// project's build, but nothing that publishes or reaches out: user settings and MCP servers are skipped,
+/// commit/push/release/install and network commands are denied, and each run has a spend cap and a time limit.
+enum AutoBuild {
+    private final class Job {
+        let process: Process, dir: String
+        var stopped = false, timedOut = false
+        init(_ p: Process, _ dir: String) { process = p; self.dir = dir }
+    }
+    private static var jobs: [String: Job] = [:]
+    /// Ids of the cards building right now.
+    static var running: [String] { Array(jobs.keys) }
+
+    static let minutes = 45
+    static let budget = "5.00"
+    private static let denied = ["git push", "git commit", "git tag", "git reset", "git checkout", "git restore", "git clean",
+                                 "git stash", "git rebase", "git merge", "git branch", "git remote", "gh", "sudo", "rm -rf",
+                                 "ditto", "open", "osascript", "pkill", "killall", "launchctl", "security", "defaults",
+                                 "curl", "wget", "scp", "ssh"].map { "Bash(\($0):*)" }
+    private static let schema = """
+    {"type":"object","required":["ok","summary","stepsDone","tryIt","files","blocker"],"properties":{
+    "ok":{"type":"boolean"},"summary":{"type":"string"},"stepsDone":{"type":"array","items":{"type":"integer"}},
+    "tryIt":{"type":"string"},"files":{"type":"array","items":{"type":"string"}},"blocker":{"type":"string"}}}
+    """
+
+    /// "Standup bot for my team!" → "StandupBotForMyTeam".
+    static func folderName(_ s: String) -> String {
+        let words = s.components(separatedBy: CharacterSet.alphanumerics.inverted).filter { !$0.isEmpty }
+        let name = words.map { $0.prefix(1).uppercased() + $0.dropFirst() }.joined()
+        return name.isEmpty ? "NewAgent" : String(name.prefix(32))
+    }
+
+    /// Starts building card `id`; returns its dir, folder and session, or an error. `progress` gets short lines
+    /// ("Editing board.html") and `done` the result: ok, summary, stepsDone, tryIt, files, blocker (Claude's
+    /// reply), plus dir, folder, fresh, session, cost, and error/stopped when it didn't finish.
+    static func start(id: String, n: Int, brief: String, app: String, name: String, steps: [String], dir lastDir: String,
+                      progress: @escaping (String) -> Void, done: @escaping ([String: Any]) -> Void) -> Result<[String: String], AI.Failure> {
+        func fail(_ s: String) -> Result<[String: String], AI.Failure> { .failure(AI.Failure(errorDescription: s)) }
+        guard AI.claudeInstalled else { return fail("⚡ Auto-build needs Claude Code installed.") }
+        guard jobs[id] == nil else { return fail("It's already building.") }
+        let fm = FileManager.default, home = NSHomeDirectory()
+        var dir = Fleet.apps().first { $0["name"]!.caseInsensitiveCompare(app) == .orderedSame }?["path"] ?? ""
+        let fresh = dir.isEmpty
+        if fresh {
+            // A new agent gets its own folder in ~, named after the card; a second try reuses it.
+            if lastDir.hasPrefix(home + "/"), fm.fileExists(atPath: lastDir) { dir = lastDir } else {
+                let base = folderName(app.isEmpty ? name : app)
+                var cand = base, k = 2
+                while fm.fileExists(atPath: home + "/" + cand) { cand = base + String(k); k += 1 }
+                dir = home + "/" + cand
+                do { try fm.createDirectory(atPath: dir, withIntermediateDirectories: true) } catch { return fail("Couldn't make ~/\(cand).") }
+            }
+        }
+        guard !jobs.values.contains(where: { $0.dir == dir }) else { return fail("Another card is building in that folder. Wait for it to finish.") }
+        let folder = (dir as NSString).lastPathComponent
+
+        var prompt = """
+        Build this idea from my \(Edition.name) board (#\(n)) on your own. Nobody is watching this run, so don't \
+        ask me anything: make sensible choices and say what you chose in the summary.
+
+        \(brief)
+
+        """
+        if !steps.isEmpty {
+            prompt += "\nThe card's build steps, numbered:\n" + steps.enumerated().map { "\($0.offset + 1). \($0.element)" }.joined(separator: "\n") + "\n"
+        }
+        prompt += fresh
+            ? "\nIt's a new app or agent, and this folder (~/\(folder)) is its home. If one of my apps in ~ is close to it, follow how that one is laid out and built (its build.sh and README); otherwise keep it small and simple, with a build.sh."
+            : "\nThe code for \(app) is in this folder (~/\(folder)). Read enough of it to fit in with how it's written, then make the change."
+        prompt += """
+
+
+        Then build it the way this project builds (its build.sh, package.json scripts or tests) and fix whatever \
+        breaks until it builds cleanly. Work only in this folder. Don't commit, push, tag, release, install or \
+        launch anything, and don't bump the version: I'll review the changes and ship them myself.
+
+        Reply with: ok (true only when the change is made and it builds), summary (what you built, 1 to 3 \
+        sentences), stepsDone (the numbers of the build steps above that are now done), tryIt (how to try it, one \
+        sentence), files (the files you changed or added), blocker (when ok is false, what stopped you and what I \
+        need to do; else "").
+        """
+        if !Edition.buildNote.isEmpty { prompt += "\n\n" + Edition.buildNote }
+
+        let model = Edition.model(Settings.model)
+        let session = UUID().uuidString.lowercased()
+        let args = ["ideaforge", "-p", "--output-format", "stream-json", "--verbose", "--session-id", session,
+                    "--disable-slash-commands", "--setting-sources", "project", "--settings", AI.authSettings().path,
+                    "--strict-mcp-config", "--permission-mode", "acceptEdits", "--allowedTools", "Bash",
+                    "--disallowedTools"] + denied
+            + ["--max-budget-usd", budget, "--json-schema", schema, "--model", model, prompt]
+        let p = Process()
+        p.executableURL = URL(fileURLWithPath: "/bin/zsh")
+        p.arguments = ["-lc", #"export PATH="$HOME/.local/bin:$HOME/.devbar/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"; exec claude "$@""#] + args
+        p.currentDirectoryURL = URL(fileURLWithPath: dir)
+        var env = ProcessInfo.processInfo.environment.filter {
+            !["CLAUDECODE", "CLAUDE_CODE_ENTRYPOINT", "CLAUDE_CODE_SESSION_ID"].contains($0.key)
+        }
+        env["CLAUDE_CODE_DISABLE_AUTO_MEMORY"] = "1"
+        p.environment = env
+        let out = Pipe(), err = Pipe()
+        p.standardOutput = out; p.standardError = err
+        p.standardInput = FileHandle.nullDevice
+        let job = Job(p, dir)
+        do { try p.run() } catch { return fail("Couldn't start Claude: \(error.localizedDescription)") }
+        jobs[id] = job
+        let started = Date()
+
+        // The whole run is kept next to the build scripts, for when something needs a closer look.
+        let logURL = Store.shared.support.appendingPathComponent("build/idea-\(n)-auto.jsonl")
+        try? FileManager.default.createDirectory(at: logURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+        FileManager.default.createFile(atPath: logURL.path, contents: nil)
+        let log = try? FileHandle(forWritingTo: logURL)
+
+        let killer = DispatchWorkItem { if p.isRunning { job.timedOut = true; p.terminate() } }
+        DispatchQueue.global().asyncAfter(deadline: .now() + .seconds(minutes * 60), execute: killer)
+        DispatchQueue.global().async {
+            var e = Data(), result: [String: Any]?, resultLine = Data()
+            let g = DispatchGroup()
+            g.enter(); DispatchQueue.global().async { e = err.fileHandleForReading.readDataToEndOfFile(); g.leave() }
+            var buf = Data()
+            while true {
+                let chunk = out.fileHandleForReading.availableData
+                if chunk.isEmpty { break }
+                log?.write(chunk)
+                buf.append(chunk)
+                while let nl = buf.firstIndex(of: 0x0A) {
+                    let line = Data(buf[buf.startIndex..<nl])
+                    buf = Data(buf[buf.index(after: nl)...])
+                    guard let o = try? JSONSerialization.jsonObject(with: line) as? [String: Any] else { continue }
+                    if o["type"] as? String == "result" { result = o; resultLine = line }
+                    else if let s = describe(o) { DispatchQueue.main.async { progress(s) } }
+                }
+            }
+            p.waitUntilExit()
+            killer.cancel()
+            g.wait()
+            try? log?.close()
+            DispatchQueue.main.async {
+                jobs[id] = nil
+                if !resultLine.isEmpty { Edition.logUsage(task: "Auto-build", model: model, output: resultLine) }
+                var r = (result?["structured_output"] as? [String: Any]) ?? [:]
+                r["dir"] = dir; r["folder"] = folder; r["fresh"] = fresh; r["session"] = session
+                r["minutes"] = Int((Date().timeIntervalSince(started) / 60).rounded())
+                if let c = result?["total_cost_usd"] as? Double { r["cost"] = c }
+                if r["ok"] == nil {
+                    var msg = ((result?["result"] as? String) ?? String(decoding: e, as: UTF8.self)).trimmingCharacters(in: .whitespacesAndNewlines)
+                    if result?["subtype"] as? String == "error_max_budget_usd" { msg = "Hit the $\(budget) spend cap for one build." }
+                    if job.timedOut { msg = "It took longer than \(minutes) minutes, so it was stopped." }
+                    if job.stopped { msg = "Stopped."; r["stopped"] = true }
+                    r["ok"] = false
+                    r["error"] = msg.isEmpty ? "Claude stopped without a reply (exit \(p.terminationStatus))." : String(msg.suffix(300))
+                }
+                done(r)
+            }
+        }
+        return .success(["dir": dir, "folder": folder, "session": session])
+    }
+
+    static func stop(_ id: String) {
+        guard let j = jobs[id] else { return }
+        j.stopped = true
+        j.process.terminate()
+    }
+    static func stopAll() { jobs.keys.forEach(stop) }
+
+    /// One short line for the card, from a stream event: what Claude is doing right now.
+    private static func describe(_ o: [String: Any]) -> String? {
+        guard o["type"] as? String == "assistant",
+              let parts = (o["message"] as? [String: Any])?["content"] as? [[String: Any]],
+              let use = parts.last(where: { $0["type"] as? String == "tool_use" }) else { return nil }
+        let input = use["input"] as? [String: Any] ?? [:]
+        let file = ((input["file_path"] as? String) ?? "").split(separator: "/").last.map(String.init) ?? ""
+        switch use["name"] as? String ?? "" {
+        case "Read": return "Reading \(file)"
+        case "Edit", "MultiEdit": return "Editing \(file)"
+        case "Write": return "Writing \(file)"
+        case "Grep", "Glob": return "Looking through the code"
+        case "WebFetch", "WebSearch": return "Looking something up"
+        case "StructuredOutput": return "Wrapping up"
+        case "TodoWrite":
+            let todos = input["todos"] as? [[String: Any]] ?? []
+            let doneCount = todos.filter { $0["status"] as? String == "completed" }.count
+            let now = todos.first { $0["status"] as? String == "in_progress" }
+            let what = (now?["activeForm"] as? String) ?? (now?["content"] as? String) ?? "Planning"
+            return todos.isEmpty ? "Planning" : "\(what) · \(doneCount)/\(todos.count)"
+        case "Bash":
+            let d = (input["description"] as? String) ?? ""
+            return d.isEmpty ? "Running " + String(((input["command"] as? String) ?? "").prefix(50)) : d
+        case let other: return other.isEmpty ? nil : other
+        }
     }
 }
