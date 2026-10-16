@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.1 — 2026-10-17
+
+- Starting a build (⚡ Auto-build, or 🚀 Claude Code / Codex) now closes the card, so you see it land in
+  Building, where it flashes.
+
 ## 1.2.0 — 2026-10-17
 
 - ⚡ **Auto-build**: one button in a card's drawer, and Claude Code builds the idea on its own in the

@@ -1363,7 +1363,9 @@ function autoBuild(i) {
   // Steps go numbered, done ones marked, so Claude can say which ones it finished.
   const steps = (i.steps || []).map(s => (s.done ? '(already done) ' : '') + s.t);
   post({cmd:'autoBuild', id:i.id, n:i.n, brief:brief(i), app:i.app || '', name:nameOf(i), steps, dir:last.dir || ''});
-  save(); render(); renderDrawer();
+  // Close the card so it's seen landing in Building.
+  flashIds.add(i.id);
+  save(); closeDrawer(); render();
 }
 function autoHTML(i) {
   const a = i.auto;
@@ -1937,7 +1939,8 @@ function ideaClick(e, i, segBtn) {
     if (i.status === 'suggested') keepIdea(i);
     post({cmd:'build', brief:brief(i), app:i.app || '', n:i.n, tool:btn.dataset.tool});
     if (i.status === 'inbox' || i.status === 'shaped') setStatus(i, 'building');
-    save(); render(); renderDrawer();
+    flashIds.add(i.id);
+    save(); closeDrawer(); render();
   }
   if (act === 'auto') {
     // First click asks where; a second click within 5 seconds starts it.
