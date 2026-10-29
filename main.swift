@@ -779,6 +779,7 @@ final class Board: NSObject, NSWindowDelegate, WKNavigationDelegate, WKScriptMes
             cfg.userContentController.add(self, name: "forge")
             let w = WKWebView(frame: .zero, configuration: cfg)
             w.navigationDelegate = self
+            Edition.webCreated(w)
             w.setValue(false, forKey: "drawsBackground")
             let win = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1340, height: 860),
                                styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
@@ -852,7 +853,7 @@ final class Board: NSObject, NSWindowDelegate, WKNavigationDelegate, WKScriptMes
                          "showCount": Settings.showCount, "login": SMAppService.mainApp.status == .enabled],
             "version": Updates.current,
             "autoRunning": AutoBuild.running,
-        ]
+        ].merging(Edition.extraState) { a, _ in a }
         web?.evaluateJavaScript("forge.load(\(Board.json(state)))", completionHandler: nil)
     }
 
@@ -1009,7 +1010,7 @@ final class Board: NSObject, NSWindowDelegate, WKNavigationDelegate, WKScriptMes
             case "people": if let v = v as? [String] { Settings.people = v.map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty } }
             case "showCount": if let v = v as? Bool { Settings.showCount = v; app?.updateTitle() }
             case "login": app?.toggleLogin()
-            default: break
+            default: Edition.setting(k, v)
             }
             push()
         case "chooseFolder":

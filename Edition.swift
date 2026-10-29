@@ -6,6 +6,7 @@
 // an OpenAI-compatible server). It never reads your screen, browser or other apps.
 
 import AppKit
+import WebKit
 
 enum Edition {
     static let name = "Idea Forge"
@@ -71,4 +72,10 @@ enum Edition {
     static func menuItem() -> NSMenuItem? { nil }
     /// Called for every command the board sends.
     static func boardAction(_ cmd: String) {}
+    /// Extra keys for the board's state (this edition has none).
+    static var extraState: [String: Any] { [:] }
+    /// A Settings key the core doesn't handle itself.
+    static func setting(_ key: String, _ value: Any?) {}
+    /// The board's web view, right after it is created.
+    static func webCreated(_ web: WKWebView) {}
 }
