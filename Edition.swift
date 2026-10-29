@@ -61,7 +61,9 @@ enum Edition {
     static func people() -> [String] { [] }
 
     /// Called once at launch; `changed` re-applies settings when something outside the app changes them.
-    static func setUp(changed: @escaping () -> Void) {}
+    static func setUp(changed: @escaping () -> Void) {
+        FleetStyles.start(app: name) { changed() }
+    }
     /// Called after the Claude Code model picker changes.
     static func modelChanged() {}
     /// Called after every Claude Code call, with the CLI's JSON output.
@@ -72,10 +74,15 @@ enum Edition {
     static func menuItem() -> NSMenuItem? { nil }
     /// Called for every command the board sends.
     static func boardAction(_ cmd: String) {}
-    /// Extra keys for the board's state (this edition has none).
-    static var extraState: [String: Any] { [:] }
+    /// The 14 design styles (FleetStyles): the board wears the pick; Settings › Style and Nexus › 🎨 Style per App change it.
+    static var extraState: [String: Any] {
+        ["uiStyle": FleetStyles.pick, "styles": FleetStyles.list, "styleFleet": FleetStyles.parentInstalled,
+         "styleWhere": "🎨 Style per App"]
+    }
     /// A Settings key the core doesn't handle itself.
-    static func setting(_ key: String, _ value: Any?) {}
+    static func setting(_ key: String, _ value: Any?) {
+        if key == "style", let v = value as? String { FleetStyles.choose(v) }
+    }
     /// The board's web view, right after it is created.
-    static func webCreated(_ web: WKWebView) {}
+    static func webCreated(_ web: WKWebView) { FleetStyles.wear(web) }
 }

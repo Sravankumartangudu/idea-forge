@@ -330,8 +330,8 @@ body.ed-work .logo{background:linear-gradient(145deg,#99f6e4,#14b8a6 55%,#0f766e
 :root[data-style]:not([data-style=standard]) body.ed-work { --accent: var(--st-accent); --accent-ink: var(--st-accent); --accent-fill: var(--st-accent-bg); --accent-soft: var(--st-soft); }
 :root[data-style]:not([data-style=standard]) .logo { background: var(--st-accent-bg); box-shadow: none; }
 /* fleet-styles:begin css */
-/* Fleet styles kit v1: the 14 design styles every work app offers (Settings › Style, and Citadel's Fleet Settings ›
-   🎨 Appearance › Style per app). Master copy lives in Watchtower/fleet-ui; scripts/sync-fleet-styles.sh pastes it
+/* Fleet styles kit v1: the 14 design styles every app offers (Settings › Style, and the parent's
+   🎨 Style per app). The copy in Nexus/styles is pasted by Nexus's scripts/sync-styles.sh
    between the fleet-styles:begin / fleet-styles:end markers at the END of each page's <style>, so it wins over the page.
    The pick sits on <html data-style> (FleetStyles.wear in Swift puts it there). "standard" has no layer: it's the
    page's own look.
@@ -809,7 +809,7 @@ body.ed-work .logo{background:linear-gradient(145deg,#99f6e4,#14b8a6 55%,#0f766e
 
 <script>
 /* fleet-styles:begin js */
-/* Fleet styles kit v1 (script half). Master copy: Watchtower/fleet-ui. Only the Settings page needs it; the pages that
+/* Fleet styles kit v1 (script half). Copy kept in Nexus/styles. Only the Settings page needs it; the pages that
    wear a style get <html data-style> from Swift (FleetStyles.wear) and need only the CSS half.
    FleetStyles.picker(box, styles, current, onPick)   draws the Style cards (radios, name=uiStyle) into box the first
        time and ticks `current` every time; styles = [{ id, name, blurb }] from the app (FleetStyles.list in Swift).
@@ -2200,7 +2200,7 @@ function renderSettings() {
       <input type="text" data-pin placeholder="Add a name for Who can help"></div>
     <div class="grp">Appearance</div>${segBtns('appearance', S.ed.appearances, st.appearance || S.ed.appearances[0][0])}
     ${S.styles.length ? `<div class="grp">Style</div><div id="styles"></div>
-    <div class="hint">The design this window wears. It changes at once; every style has a light and a dark look, so Appearance still applies.${S.styleFleet ? ' It can also be picked in the common settings (Fleet Settings › Appearance); both always show the same one.' : ''}</div>` : ''}
+    <div class="hint">The design this window wears. It changes at once; every style has a light and a dark look, so Appearance still applies.${S.styleFleet ? ` It can also be picked in the common settings (${esc(S.styleWhere || 'Fleet Settings › Appearance')}); both always show the same one.` : ''}</div>` : ''}
     <div class="grp">Menu bar</div>
     ${sw('showCount', 'Show pending count next to ' + S.ed.symbol, st.showCount !== false)}
     ${sw('login', 'Launch at login', !!st.login)}

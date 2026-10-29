@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.4.0 — 2026-10-29
+
+- **🎨 Style** in Settings: the board can wear one of 14 designs (Standard, Skeuomorphic, Flat, Material,
+  Neumorphic, Glassmorphism, Liquid Glass, Claymorphism, Neo-brutalism, Swiss minimal, Bento grid, Retro,
+  Aurora, Cyber). Each has a light and a dark look, so Appearance still applies. It changes at once.
+- With [Nexus](https://github.com/Sravankumartangudu/nexus) 1.12 installed, the Style can also be picked in
+  the common settings (🎨 Style per App); both always show the same one.
+
 ## 1.3.2 — 2026-10-17
 
 - A card whose 🚀 Deploy stopped short but whose change got installed anyway (for example finished by hand)

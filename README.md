@@ -139,6 +139,8 @@ The **Matrix** tab places pending ideas by impact and effort: 🎯 **Quick wins*
 - **Shortcuts**: ⌃⌥N quick capture on or off, or ⌃⌥⇧N instead.
 - **People**: names for Who can help.
 - **Appearance**: System, Light or Dark.
+- **Style**: one of 14 designs for the board (Standard, Skeuomorphic, Glassmorphism, Neo-brutalism, Retro, Cyber…),
+  each with a light and a dark look. With Nexus installed it can also be picked in the common settings, and both stay in sync.
 - **Menu bar**: show or hide the pending count, and launch at login.
 - **Your ideas file**: Show in Finder, or **Choose folder…** to keep it somewhere else, such as iCloud Drive.
 - **Updates**: Idea Forge checks GitHub for a newer release and shows a Download button when one is out.
